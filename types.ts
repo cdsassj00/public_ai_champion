@@ -1,0 +1,24 @@
+
+export enum CertificationType {
+  GREEN = 'GREEN',
+  BLUE = 'BLUE',
+  BLACK = 'BLACK'
+}
+
+export type ChampionStatus = 'APPROVED' | 'PENDING';
+
+export interface Champion {
+  id: string;
+  name: string;
+  department: string;
+  role: string;
+  certType: CertificationType;
+  vision: string;
+  imageUrl: string;
+  registeredAt: string;
+  projectUrl?: string;
+  achievement?: string;
+  status: ChampionStatus;
+}
+
+export type ViewState = 'HOME' | 'HALL_OF_FAME' | 'REGISTER' | 'ABOUT';
