@@ -1,9 +1,10 @@
 
 import { defineConfig, loadEnv } from 'vite';
 import react from '@vitejs/plugin-react';
+import process from 'node:process';
 
 export default defineConfig(({ mode }) => {
-  // loadEnv는 세 번째 인자가 ''일 때 시스템 환경 변수(Vercel Envs)를 모두 로드합니다.
+  // Fix: use process.cwd() with explicit node:process import to satisfy TypeScript
   const env = loadEnv(mode, process.cwd(), '');
   
   const resolvedApiKey = env.API_KEY || env.VITE_API_KEY || "";
