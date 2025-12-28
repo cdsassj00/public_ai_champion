@@ -1,17 +1,35 @@
 
 import { GoogleGenAI } from "@google/genai";
 
+// Window 인터페이스 확장을 통해 aistudio 타입 정의
+// Fix: Use the global AIStudio interface and match the property signature on Window to avoid type conflicts.
+// All declarations of 'aistudio' must have identical modifiers and consistent types.
+declare global {
+  interface AIStudio {
+    hasSelectedApiKey: () => Promise<boolean>;
+    openSelectKey: () => Promise<void>;
+  }
+
+  interface Window {
+    aistudio?: AIStudio;
+  }
+}
+
 /**
  * Gemini 3 Pro Image (Nano Banana Pro) 등 고성능 모델 사용 시 
  * 브라우저 환경에서 API 키 선택 여부를 확인하고 인스턴스를 생성합니다.
  */
 async function getAiInstance() {
   // window.aistudio 환경(특수 실행 환경)인 경우 키 선택 여부 확인
-  if (typeof (window as any).aistudio !== 'undefined') {
-    const hasKey = await (window as any).aistudio.hasSelectedApiKey();
-    if (!hasKey) {
-      await (window as any).aistudio.openSelectKey();
-      // openSelectKey 호출 후에는 즉시 성공한 것으로 간주하고 진행 (레이스 컨디션 방지)
+  if (typeof window !== 'undefined' && window.aistudio) {
+    try {
+      const hasKey = await window.aistudio.hasSelectedApiKey();
+      if (!hasKey) {
+        await window.aistudio.openSelectKey();
+        // openSelectKey 호출 후에는 즉시 성공한 것으로 간주하고 진행 (레이스 컨디션 방지)
+      }
+    } catch (e) {
+      console.warn("aistudio check failed, proceeding with env key.");
     }
   }
   
@@ -30,7 +48,7 @@ export async function polishVision(name: string, dept: string, vision: string) {
       model: 'gemini-3-flash-preview',
       contents: `사용자의 이름은 ${name}이고 소속은 ${dept}입니다. 이 사용자가 작성한 AI 챔피언으로서의 포부는 다음과 같습니다: "${vision}". 이 포부를 더 전문적이고 영감을 주는 문장으로 다듬어주세요. 결과는 한 문장으로만 출력하세요.`,
       config: { 
-        thinkingConfig: { thinkingBudget: 0 } // 빠른 응답을 위해 씽킹 비활성화
+        thinkingConfig: { thinkingBudget: 0 }
       }
     });
     return response.text || vision;
@@ -91,8 +109,8 @@ export async function transformPortrait(base64Image: string, mimeType: string) {
     throw new Error("이미지 생성 결과가 없습니다.");
   } catch (error: any) {
     // 키 관련 에러 발생 시 재선택 유도
-    if (error?.message?.includes("Requested entity was not found") && typeof (window as any).aistudio !== 'undefined') {
-      await (window as any).aistudio.openSelectKey();
+    if (error?.message?.includes("Requested entity was not found") && typeof window !== 'undefined' && window.aistudio) {
+      await window.aistudio.openSelectKey();
     }
     throw error;
   }
