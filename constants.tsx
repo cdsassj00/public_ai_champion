@@ -14,7 +14,9 @@ export const SAMPLE_CHAMPIONS: Champion[] = [
     projectUrl: 'https://vibecoding.com/example-1',
     achievement: '범정부 초거대 AI 공통 인프라 아키텍처 설계 및 구축 주도',
     status: 'APPROVED',
-    viewCount: 1240
+    viewCount: 1240,
+    // Fix: Added missing passcode required by Champion type
+    passcode: '0000'
   },
   {
     id: 'a2',
@@ -27,7 +29,9 @@ export const SAMPLE_CHAMPIONS: Champion[] = [
     registeredAt: '2025.02.01',
     achievement: 'AI 기반 실시간 교통 최적화 알고리즘 서울시 전역 확대 적용',
     status: 'APPROVED',
-    viewCount: 856
+    viewCount: 856,
+    // Fix: Added missing passcode required by Champion type
+    passcode: '0000'
   },
   {
     id: 'a3',
@@ -40,7 +44,9 @@ export const SAMPLE_CHAMPIONS: Champion[] = [
     registeredAt: '2025.02.10',
     achievement: '국가 AI 윤리 가이드라인 제정 및 공공 가이드 보급',
     status: 'APPROVED',
-    viewCount: 432
+    viewCount: 432,
+    // Fix: Added missing passcode required by Champion type
+    passcode: '0000'
   },
   {
     id: 'a4',
@@ -54,7 +60,9 @@ export const SAMPLE_CHAMPIONS: Champion[] = [
     projectUrl: 'https://vibecoding.com/example-nia',
     achievement: '세계 최초 공공부문 특화 LLM 평가 지표 개발 및 적용',
     status: 'APPROVED',
-    viewCount: 2105
+    viewCount: 2105,
+    // Fix: Added missing passcode required by Champion type
+    passcode: '0000'
   }
 ];
 

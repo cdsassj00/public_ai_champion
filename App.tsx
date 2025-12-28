@@ -20,11 +20,20 @@ const App: React.FC = () => {
   const [selectedChampion, setSelectedChampion] = useState<Champion | null>(null);
   const [editingChampion, setEditingChampion] = useState<Champion | null>(null);
 
+  const shuffleArray = (array: Champion[]) => {
+    const shuffled = [...array];
+    for (let i = shuffled.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    }
+    return shuffled;
+  };
+
   const loadData = async () => {
     setIsLoading(true);
     try {
       const data = await apiService.fetchChampions();
-      setChampions(data);
+      setChampions(shuffleArray(data));
     } catch (error) {
       console.error("Data Load Error:", error);
     } finally {
@@ -52,173 +61,109 @@ const App: React.FC = () => {
     setView('EDIT_PROFILE');
   };
 
+  const handleDeleteChampion = (id: string) => {
+    setChampions(prev => prev.filter(c => c.id !== id));
+    setSelectedChampion(null);
+  };
+
   const filteredChampions = useMemo(() => {
     const query = searchQuery.toLowerCase().trim();
     if (!query) return champions;
     return champions.filter(c => 
       c.name.toLowerCase().includes(query) || 
-      c.department.toLowerCase().includes(query)
+      c.department.toLowerCase().includes(query) ||
+      c.role.toLowerCase().includes(query)
     );
   }, [champions, searchQuery]);
 
+  const placeholderCount = Math.max(3, 12 - filteredChampions.length);
+
   return (
-    <div className="relative min-h-screen bg-black text-white selection:bg-yellow-500 selection:text-black">
+    <div className="relative min-h-screen bg-black text-white selection:bg-yellow-500 selection:text-black overflow-x-hidden">
       <Background3D />
       <Navigation currentView={view} setView={setView} />
 
       <AnimatePresence mode="wait">
-        <motion.main
-          key={view}
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          transition={{ duration: 0.6 }}
-          className="pt-10"
-        >
-          {view === 'HOME' && (
-            <Hero 
-              onExplore={() => setView('HALL_OF_FAME')} 
-              onJoin={() => setView('REGISTER')} 
-            />
-          )}
+        <motion.main key={view} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.4 }} className="pt-10 w-full">
+          {view === 'HOME' && <Hero onExplore={() => setView('HALL_OF_FAME')} onJoin={() => setView('REGISTER')} />}
 
           {view === 'HALL_OF_FAME' && (
-            <div className="max-w-7xl mx-auto px-6 py-24">
-              <motion.div 
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="mb-16 text-center"
-              >
-                <h2 className="text-4xl md:text-5xl font-light serif-title mb-6 tracking-tight uppercase">The Hall of <span className="gold-text font-black">Prestige</span></h2>
-                <div className="w-20 h-[1px] bg-yellow-500/50 mx-auto mb-8"></div>
-                <p className="text-white/40 max-w-2xl mx-auto font-light leading-relaxed mb-12">
-                  대한민국 공공분야의 디지털 대전환을 선도하는 정예 요원들입니다.<br/>
-                  지능형 행정의 역사를 새롭게 써 내려가는 그들의 비전을 만나보세요.
-                </p>
-
-                <div className="max-w-lg mx-auto relative group">
-                  <div className="absolute inset-0 bg-yellow-500/5 blur-xl rounded-full opacity-0 group-focus-within:opacity-100 transition-opacity"></div>
-                  <div className="relative">
-                    <input 
-                      type="text"
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                      placeholder="성함 또는 소속 부처 검색"
-                      className="w-full bg-white/5 border border-white/10 px-8 py-4 rounded-full text-sm font-light focus:outline-none focus:border-yellow-500/50 focus:bg-white/10 transition-all placeholder:text-white/20 backdrop-blur-md"
-                    />
-                    <div className="absolute right-6 top-1/2 -translate-y-1/2 opacity-30 group-focus-within:opacity-100 transition-opacity">
-                      <svg className="w-4 h-4 text-yellow-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                      </svg>
+            <div className="max-w-[1600px] mx-auto px-2 sm:px-6 py-12 md:py-24">
+              <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} className="mb-14 md:mb-20 text-center">
+                <span className="text-[10px] md:text-xs font-black tracking-[0.4em] text-yellow-500/60 uppercase block mb-4">Official Registry</span>
+                <h2 className="text-3xl md:text-5xl font-light serif-title mb-6 tracking-tight uppercase break-keep">공공 AI 챔피언 <span className="gold-text font-black">명예의 전당</span></h2>
+                
+                <div className="max-w-2xl mx-auto relative group px-4">
+                  <div className="absolute -inset-1 bg-gradient-to-r from-yellow-500/20 via-transparent to-yellow-500/20 blur-xl opacity-0 group-focus-within:opacity-100 transition-opacity duration-700"></div>
+                  <div className="relative flex items-center">
+                    <div className="absolute left-7 text-white/20 group-focus-within:text-yellow-500 transition-colors duration-300">
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
                     </div>
+                    <input type="text" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} placeholder="이름 또는 부처명으로 혁신가를 찾으세요" className="w-full bg-white/[0.02] border border-white/10 pl-14 pr-14 py-5 rounded-full text-sm md:text-base font-light focus:outline-none focus:border-yellow-500/50 focus:bg-white/[0.05] transition-all backdrop-blur-3xl shadow-[0_0_50px_rgba(0,0,0,0.5)]" />
+                    {searchQuery && (
+                      <button onClick={() => setSearchQuery('')} className="absolute right-6 p-2 text-white/20 hover:text-white transition-colors">
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                      </button>
+                    )}
+                  </div>
+                  <div className="mt-4 flex items-center justify-center space-x-6 text-[9px] md:text-[10px] font-black tracking-widest uppercase">
+                    <div className="flex items-center space-x-2">
+                       <span className="text-white/20">Discovery:</span>
+                       <motion.span key={filteredChampions.length} initial={{ opacity: 0, y: -5 }} animate={{ opacity: 1, y: 0 }} className="text-yellow-500">{filteredChampions.length} Found</motion.span>
+                    </div>
+                    <div className="w-[1px] h-3 bg-white/10"></div>
+                    <div className="text-white/20">Order: <span className="text-white/40 italic">Randomized</span></div>
                   </div>
                 </div>
               </motion.div>
 
               {isLoading ? (
                 <div className="flex flex-col items-center justify-center py-20 opacity-30">
-                  <div className="w-8 h-8 border-2 border-yellow-500 border-t-transparent rounded-full animate-spin mb-4"></div>
-                  <span className="text-[10px] font-bold tracking-widest uppercase">Syncing with Master Database...</span>
-                </div>
-              ) : filteredChampions.length > 0 ? (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 md:gap-8 lg:gap-10">
-                  {filteredChampions.map((champion, index) => (
-                    <ChampionCard 
-                      key={champion.id} 
-                      champion={champion} 
-                      index={index}
-                      onClick={handleSelectChampion}
-                    />
-                  ))}
+                  <div className="w-5 h-5 border-2 border-yellow-500 border-t-transparent rounded-full animate-spin mb-3"></div>
+                  <span className="text-[8px] font-bold tracking-widest uppercase">Syncing Registry...</span>
                 </div>
               ) : (
-                <div className="py-20 text-center">
-                  <p className="text-white/20 font-light italic">검색 결과에 해당하는 챔피언이 없습니다.</p>
-                </div>
+                <motion.div layout className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-2 md:gap-4 lg:gap-5">
+                  <AnimatePresence mode="popLayout">
+                    {filteredChampions.map((champion, index) => (
+                      <ChampionCard key={champion.id} champion={champion} index={index} onClick={handleSelectChampion} />
+                    ))}
+                  </AnimatePresence>
+                  {!searchQuery && Array.from({ length: placeholderCount }).map((_, i) => (
+                    <motion.div key={`placeholder-${i}`} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.1 }} onClick={() => setView('REGISTER')} className="group relative flex flex-col bg-neutral-950/40 border border-white/5 overflow-hidden transition-all duration-500 cursor-pointer aspect-[3/4.2] sm:aspect-auto">
+                       <div className="relative aspect-square bg-neutral-900/50 flex items-center justify-center overflow-hidden">
+                          <svg className="w-1/2 h-1/2 text-white/5 opacity-40 group-hover:opacity-100 group-hover:text-yellow-500/20 transition-all duration-700" fill="currentColor" viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" /></svg>
+                          <div className="absolute inset-0 border-2 border-dashed border-white/5 group-hover:border-yellow-500/20 transition-colors"></div>
+                          <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                             <div className="bg-black/95 backdrop-blur-2xl px-5 py-2.5 border border-white/10 shadow-2xl rounded-sm">
+                               <span className="text-[9px] font-black tracking-[0.3em] text-white uppercase">Your Place Here</span>
+                             </div>
+                          </div>
+                       </div>
+                       <div className="p-2.5 sm:p-4 flex flex-col items-center justify-center h-full opacity-10 group-hover:opacity-40 transition-opacity">
+                          <span className="text-[7px] font-bold tracking-[0.5em] uppercase">Pending Data</span>
+                       </div>
+                    </motion.div>
+                  ))}
+                </motion.div>
               )}
             </div>
           )}
 
-          {view === 'REGISTER' && (
-            <div className="py-24">
-              <RegistrationForm onSuccess={() => setView('HALL_OF_FAME')} />
-            </div>
-          )}
-
-          {view === 'EDIT_PROFILE' && editingChampion && (
-            <div className="py-24">
-              <RegistrationForm 
-                onSuccess={() => {
-                  setView('HALL_OF_FAME');
-                  setEditingChampion(null);
-                }} 
-                editData={editingChampion}
-              />
-            </div>
-          )}
-
+          {view === 'REGISTER' && <div className="py-12 md:py-24"><RegistrationForm onSuccess={() => setView('HALL_OF_FAME')} /></div>}
+          {view === 'EDIT_PROFILE' && editingChampion && <div className="py-12 md:py-24"><RegistrationForm onSuccess={() => { setView('HALL_OF_FAME'); setEditingChampion(null); }} editData={editingChampion} /></div>}
           {view === 'ABOUT' && (
-            <div className="max-w-7xl mx-auto px-6 py-32">
-               <motion.div 
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="text-center mb-32"
-               >
-                  <h2 className="text-5xl md:text-7xl font-black serif-title mb-8 uppercase tracking-tighter">Certification <span className="gold-text">Hierarchy</span></h2>
-                  <div className="w-24 h-1 bg-yellow-500/30 mx-auto mb-10"></div>
-                  <p className="text-white/40 font-light max-w-2xl mx-auto text-lg leading-relaxed">
-                    대한민국 공공 AI 전문가로서의 여정은 세 단계의 엄격한 인증 과정을 통해<br/> 그 가치를 인정받습니다. 등급이 높을수록 국가적 파급력이 입증된 리더를 의미합니다.
-                  </p>
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 py-20">
+               <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="text-center mb-16">
+                  <h2 className="text-3xl md:text-6xl font-black serif-title mb-6 uppercase tracking-tighter">Certification</h2>
+                  <div className="w-12 h-1 bg-yellow-500/30 mx-auto mb-8"></div>
                </motion.div>
-
-               <div className="grid grid-cols-1 gap-16">
-                  {Object.entries(CERT_DETAILS).map(([key, detail], idx) => (
-                    <motion.div 
-                      key={key}
-                      initial={{ opacity: 0, scale: 0.95 }}
-                      whileInView={{ opacity: 1, scale: 1 }}
-                      viewport={{ once: true }}
-                      whileHover={{ scale: 1.01 }}
-                      className={`relative group p-1 md:p-[2px] rounded-sm overflow-hidden bg-gradient-to-br ${key === 'BLACK' ? 'from-yellow-500/50 via-white/20 to-yellow-900/50' : key === 'BLUE' ? 'from-blue-500/50 to-blue-900/50' : 'from-emerald-500/50 to-emerald-900/50'}`}
-                    >
-                      <div className="bg-neutral-950 p-10 md:p-16 flex flex-col lg:flex-row gap-16 relative">
-                        {/* Huge Decorative Letter */}
-                        <div className={`absolute top-0 right-10 text-[200px] font-black italic opacity-[0.03] select-none pointer-events-none ${detail.color}`}>
-                          {key[0]}
-                        </div>
-
-                        <div className="lg:w-2/5">
-                          <span className={`text-sm font-black tracking-[0.5em] uppercase block mb-6 ${detail.color}`}>Rank Certificate</span>
-                          <h3 className={`text-5xl font-black tracking-tighter uppercase mb-6 serif-title ${key === 'BLACK' ? 'gold-text' : detail.color}`}>{detail.title}</h3>
-                          <div className={`w-16 h-1.5 ${detail.accent} mb-10`}></div>
-                          <p className="text-2xl font-bold text-white/90 leading-tight mb-4">{detail.desc}</p>
-                          <p className="text-white/40 font-light leading-relaxed">
-                            {key === 'BLACK' ? '국가 AI 정책의 기틀을 마련하고 대규모 인프라를 혁신한 최상위 전문가 집단입니다.' : 
-                             key === 'BLUE' ? '복잡한 알고리즘을 실무에 성공적으로 이식하여 정량적 성과를 입증한 핵심 요원입니다.' : 
-                             'AI 기술의 행정 도입을 기획하고 생성형 AI를 실무에 창의적으로 활용하는 선구적 실무자입니다.'}
-                          </p>
-                        </div>
-                        
-                        <div className="lg:w-3/5 grid grid-cols-1 sm:grid-cols-2 gap-8 self-center">
-                          <div className={`p-8 bg-white/5 border border-white/10 rounded-sm group-hover:${detail.border} transition-colors`}>
-                            <h4 className="text-[12px] font-black uppercase tracking-[0.3em] text-white/30 mb-6">Core Competency</h4>
-                            <p className="text-base text-white/70 leading-relaxed font-light">
-                              {key === 'GREEN' ? '생성형 AI의 행정 업무 적용 및 기초 데이터 활용 역량, 디지털 전환 초기 가속화 주도' : 
-                               key === 'BLUE' ? '고급 분석 알고리즘 설계 및 실질적 구현 능력, 부처 내 데이터 기반 의사결정 체계 확립' : 
-                               '국가적 AI 거버넌스 수립 및 초거대 AI 기반의 범정부 공통 인프라 기획 및 아키텍처 설계'}
-                            </p>
-                          </div>
-                          <div className={`p-8 bg-white/5 border border-white/10 rounded-sm group-hover:${detail.border} transition-colors`}>
-                            <h4 className="text-[12px] font-black uppercase tracking-[0.3em] text-white/30 mb-6">Requirement</h4>
-                            <ul className="text-sm text-white/60 space-y-3 font-light">
-                              <li className="flex items-center gap-2"><div className={`w-1 h-1 rounded-full ${detail.accent}`}></div> 전용 교육 과정 이수</li>
-                              <li className="flex items-center gap-2"><div className={`w-1 h-1 rounded-full ${detail.accent}`}></div> {key === 'BLACK' ? '국가 프로젝트 3건 이상' : key === 'BLUE' ? '실무 과제 90점 이상' : '실무 활용 포트폴리오'}</li>
-                              <li className="flex items-center gap-2"><div className={`w-1 h-1 rounded-full ${detail.accent}`}></div> 전문 위원회 최종 심사 통과</li>
-                            </ul>
-                          </div>
-                        </div>
-                      </div>
-                    </motion.div>
+               <div className="grid grid-cols-1 gap-6 md:gap-10">
+                  {Object.entries(CERT_DETAILS).map(([key, detail]) => (
+                    <div key={key} className="bg-neutral-950/50 p-6 md:p-10 border border-white/5 rounded-sm">
+                      <span className={`text-[10px] font-black tracking-widest uppercase mb-2 block ${detail.color}`}>{key} RANK</span>
+                      <h3 className="text-xl md:text-3xl font-bold mb-4">{detail.desc}</h3>
+                    </div>
                   ))}
                </div>
             </div>
@@ -230,20 +175,11 @@ const App: React.FC = () => {
         champion={selectedChampion} 
         onClose={() => setSelectedChampion(null)} 
         onEdit={handleStartEdit}
+        onDelete={handleDeleteChampion}
       />
 
-      <footer className="py-24 border-t border-white/5 relative z-10 bg-black">
-        <div className="max-w-7xl mx-auto px-6 flex flex-col items-center">
-          <div className="flex items-center space-x-6 mb-12 opacity-30">
-            <span className="text-[11px] font-black tracking-[0.6em] uppercase">Ministry of Interior</span>
-            <div className="w-1.5 h-1.5 bg-yellow-500 rounded-full"></div>
-            <span className="text-[11px] font-black tracking-[0.6em] uppercase">Digital Platform Govt</span>
-          </div>
-          <p className="text-[10px] text-white/20 tracking-[0.3em] uppercase font-bold text-center leading-loose">
-            &copy; 2025 AI Champion Hall of Fame. Authentic Distinction for Digital Architects.<br/>
-            All data is synchronized with Supabase Persistent Cloud Infrastructure.
-          </p>
-        </div>
+      <footer className="py-12 border-t border-white/5 relative z-10 bg-black text-center text-[7px] md:text-[9px] text-white/10 tracking-[0.2em] uppercase font-bold">
+        &copy; 2025 AI Champion Hall of Fame. National Digital Initiative.
       </footer>
     </div>
   );

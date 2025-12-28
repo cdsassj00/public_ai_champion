@@ -22,79 +22,60 @@ const ChampionCard: React.FC<ChampionCardProps> = ({ champion, index, onClick })
   return (
     <motion.div 
       layout
-      initial={{ opacity: 0, y: 30 }}
+      initial={{ opacity: 0, scale: 0.95 }}
       whileInView={{ 
         opacity: 1, 
-        y: 0,
+        scale: 1,
         transition: {
-          delay: (index % 8) * 0.05,
-          duration: 0.6,
-          ease: [0.16, 1, 0.3, 1]
+          delay: (index % 12) * 0.03,
+          duration: 0.4
         }
       }}
-      viewport={{ once: true, margin: "-50px" }}
+      viewport={{ once: true, margin: "-10px" }}
       whileHover={{ 
-        y: -8,
-        transition: { duration: 0.4 }
+        y: -5,
+        transition: { duration: 0.2 }
       }}
       onClick={() => onClick(champion)}
-      className={`group relative flex flex-col bg-neutral-900/60 border ${details.border} overflow-hidden transition-all duration-500 cursor-pointer ${details.glow}`}
+      className={`group relative flex flex-col bg-neutral-900 border ${details.border} overflow-hidden transition-all duration-500 cursor-pointer ${details.glow} hover:shadow-[0_0_40px_rgba(255,255,255,0.05)]`}
     >
       {/* Grade Accent Top Bar */}
-      <div className={`absolute top-0 left-0 right-0 h-1 ${details.accent} opacity-50 group-hover:opacity-100 transition-opacity z-20`}></div>
+      <div className={`absolute top-0 left-0 right-0 h-[2px] ${details.accent} opacity-40 group-hover:opacity-100 transition-opacity z-20`}></div>
 
-      <div className="relative aspect-[3/4] overflow-hidden grayscale-[0.5] group-hover:grayscale-0 transition-all duration-700">
+      <div className="relative aspect-square overflow-hidden grayscale-[0.6] group-hover:grayscale-0 transition-all duration-700">
         <img 
           src={displayImage} 
           alt={champion.name}
-          className="w-full h-full object-cover object-top transition-transform duration-[2s] group-hover:scale-110"
+          className="w-full h-full object-cover object-top transition-transform duration-1000 group-hover:scale-110"
         />
         
-        {/* Grade Overlay */}
-        <div className={`absolute inset-0 bg-gradient-to-t ${details.bg} opacity-0 group-hover:opacity-100 transition-opacity duration-700`}></div>
+        {/* Grade Color Overlay */}
+        <div className={`absolute inset-0 bg-gradient-to-t ${details.bg} opacity-10 group-hover:opacity-40 transition-opacity`}></div>
         
-        <div className="absolute top-4 left-4 flex flex-col gap-2 z-10">
-           <div className={`px-3 py-1 text-[8px] font-black tracking-[0.2em] border ${details.border} backdrop-blur-xl bg-black/80 ${details.color} uppercase shadow-2xl`}>
-            {details.title}
+        {/* Rank Badge */}
+        <div className="absolute top-2 left-2 flex flex-col gap-1 z-10">
+           <div className={`px-2 py-0.5 text-[7px] md:text-[8px] font-black tracking-[0.1em] border ${details.border} backdrop-blur-2xl bg-black/80 ${details.color} uppercase flex items-center gap-1 shadow-lg`}>
+            <div className={`w-1 h-1 rounded-full ${details.accent} animate-pulse`}></div>
+            {champion.certType}
           </div>
           {isOwner && (
-            <div className="px-2 py-0.5 text-[6px] font-bold tracking-widest bg-emerald-500 text-black uppercase w-fit shadow-lg">
-              MY PROFILE
+            <div className="px-2 py-0.5 text-[6px] font-black bg-white text-black uppercase w-fit shadow-md tracking-tighter">
+              MY RECORD
             </div>
           )}
         </div>
-
-        <div className="absolute bottom-4 right-4 flex items-center space-x-2 px-3 py-1.5 bg-black/60 backdrop-blur-md rounded-full border border-white/10 opacity-0 group-hover:opacity-100 transition-all translate-y-2 group-hover:translate-y-0">
-          <div className={`w-1.5 h-1.5 ${details.accent} rounded-full animate-pulse shadow-[0_0_8px_currentColor]`}></div>
-          <span className="text-[9px] font-bold text-white uppercase tracking-tighter">
-            {champion.viewCount?.toLocaleString() || 0} VIEWS
-          </span>
-        </div>
       </div>
 
-      <div className="p-5 flex flex-col bg-black/90 backdrop-blur-2xl border-t border-white/5 relative">
-        {/* Subtle Rank Icon Background */}
-        <div className={`absolute top-4 right-5 text-[40px] font-black ${details.color} opacity-[0.03] select-none pointer-events-none italic`}>
-          {champion.certType[0]}
-        </div>
-
-        <span className="text-[8px] text-white/30 uppercase tracking-[0.3em] mb-1 font-bold truncate">{champion.department}</span>
-        <div className="flex items-baseline justify-between mb-1">
-          <h3 className="text-xl font-bold serif-title text-white group-hover:text-yellow-500 transition-colors">{champion.name}</h3>
-          <span className="text-[8px] text-white/40 font-bold uppercase tracking-widest">{champion.registeredAt}</span>
-        </div>
-        <p className="text-[10px] text-white/50 font-light truncate">{champion.role}</p>
-        
-        <div className="flex items-center justify-between mt-5 pt-3 border-t border-white/5">
-          <div className="flex items-center space-x-2">
-             <div className={`w-1 h-1 rounded-full ${details.accent}`}></div>
-             <span className="text-[8px] font-bold text-white/40 group-hover:text-white/80 transition-colors uppercase tracking-widest">Digital Leader</span>
-          </div>
-          <div className="flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-all translate-x-2 group-hover:translate-x-0">
-             <span className="text-[8px] font-black tracking-tighter uppercase text-yellow-500">Details</span>
-             <svg className="w-2.5 h-2.5 text-yellow-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="4" d="M9 5l7 7-7 7"></path></svg>
-          </div>
-        </div>
+      <div className="p-2.5 sm:p-3 flex flex-col bg-neutral-950 border-t border-white/5 relative">
+        <span className={`text-[6px] sm:text-[8px] ${details.color} opacity-50 uppercase tracking-[0.2em] mb-0.5 font-black truncate`}>
+          {champion.department}
+        </span>
+        <h3 className="text-[11px] sm:text-[14px] font-bold serif-title text-white group-hover:text-white transition-colors truncate">
+          {champion.name}
+        </h3>
+        <p className="text-[7px] sm:text-[9px] text-white/20 font-medium truncate italic mt-0.5">
+          {champion.role}
+        </p>
       </div>
     </motion.div>
   );
