@@ -20,7 +20,8 @@ export interface Champion {
   achievement?: string;
   status: ChampionStatus;
   viewCount: number;
-  passcode: string; // 본인 확인용 PIN (4자리)
+  email: string;      // 관리용 이메일
+  password: string;   // 관리용 비밀번호
 }
 
 export type ViewState = 'HOME' | 'HALL_OF_FAME' | 'REGISTER' | 'ABOUT' | 'EDIT_PROFILE';

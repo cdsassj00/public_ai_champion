@@ -31,8 +31,55 @@ export const apiService = {
       achievement: row.achievement,
       status: row.status,
       viewCount: row.view_count || 0,
-      passcode: row.passcode || '0000'
+      email: row.email || '',
+      password: row.password || ''
     }));
+  },
+
+  /**
+   * Base64 데이터를 받아 Supabase Storage에 파일로 저장하고, 접근 가능한 퍼블릭 URL을 반환합니다.
+   */
+  uploadImage: async (base64Data: string, fileName: string): Promise<string> => {
+    try {
+      // 1. 유효성 검사 및 접두어 제거
+      if (!base64Data) throw new Error('데이터가 없습니다.');
+      const base64Content = base64Data.includes(',') ? base64Data.split(',')[1] : base64Data;
+      
+      // 2. 바이너리 변환 (안전한 방식)
+      const binaryString = window.atob(base64Content);
+      const bytes = new Uint8Array(binaryString.length);
+      for (let i = 0; i < binaryString.length; i++) {
+        bytes[i] = binaryString.charCodeAt(i);
+      }
+      const blob = new Blob([bytes], { type: 'image/jpeg' });
+
+      // 3. 고유 파일명 생성
+      const timestamp = Date.now();
+      const randomStr = Math.random().toString(36).substring(7);
+      const safeFileName = fileName.replace(/[^a-z0-9]/gi, '_').toLowerCase();
+      const filePath = `profiles/${safeFileName}_${timestamp}_${randomStr}.jpg`;
+
+      // 4. 업로드 실행
+      const { error: uploadError } = await supabase.storage
+        .from('champions')
+        .upload(filePath, blob, {
+          cacheControl: '3600',
+          upsert: true,
+          contentType: 'image/jpeg'
+        });
+
+      if (uploadError) throw uploadError;
+
+      // 5. URL 생성
+      const { data: { publicUrl } } = supabase.storage
+        .from('champions')
+        .getPublicUrl(filePath);
+
+      return publicUrl;
+    } catch (error) {
+      console.error('Critical Upload Error:', error);
+      throw error;
+    }
   },
 
   createChampion: async (champion: Champion): Promise<void> => {
@@ -51,7 +98,8 @@ export const apiService = {
         achievement: champion.achievement,
         status: champion.status,
         view_count: champion.viewCount,
-        passcode: champion.passcode
+        email: champion.email,
+        password: champion.password
       }]);
 
     if (error) throw error;
@@ -70,7 +118,8 @@ export const apiService = {
         project_url: champion.projectUrl,
         achievement: champion.achievement,
         status: champion.status,
-        passcode: champion.passcode
+        email: champion.email,
+        password: champion.password
       })
       .eq('id', champion.id);
 

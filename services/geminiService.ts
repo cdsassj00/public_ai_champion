@@ -2,7 +2,7 @@
 import { GoogleGenAI } from "@google/genai";
 
 export async function polishVision(name: string, dept: string, vision: string) {
-  const ai = new GoogleGenAI({ apiKey: import.meta.env.VITE_GEMINI_API_KEY });
+  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
   const response = await ai.models.generateContent({
     model: 'gemini-3-flash-preview',
     contents: `사용자의 이름은 ${name}이고 소속은 ${dept}입니다. 이 사용자가 작성한 AI 챔피언으로서의 포부는 다음과 같습니다: "${vision}". 이 포부를 더 전문적이고 영감을 주는 문장으로 다듬어주세요. 결과는 한 문장으로만 출력하세요.`,
@@ -12,7 +12,7 @@ export async function polishVision(name: string, dept: string, vision: string) {
 }
 
 export async function suggestProfileContent(name: string, dept: string, role: string) {
-  const ai = new GoogleGenAI({ apiKey: import.meta.env.VITE_GEMINI_API_KEY });
+  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
   const response = await ai.models.generateContent({
     model: 'gemini-3-flash-preview',
     contents: `${dept}의 ${role}인 ${name} 챔피언이 명예의 전당에 등록하려 합니다. 이 사람이 자랑할 만한 '공공 AI 혁신 업적'을 한 문장으로 제안해주세요.`,
@@ -28,7 +28,7 @@ export async function transformPortrait(base64Image: string, mimeType: string) {
   }
 
   try {
-    const ai = new GoogleGenAI({ apiKey: import.meta.env.VITE_GEMINI_API_KEY });
+    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
     const response = await ai.models.generateContent({
       model: 'gemini-3-pro-image-preview',
       contents: {
