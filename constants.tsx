@@ -15,90 +15,58 @@ export const SAMPLE_CHAMPIONS: Champion[] = [
     achievement: '범정부 초거대 AI 공통 인프라 아키텍처 설계 및 구축 주도',
     status: 'APPROVED',
     viewCount: 1240,
-    // Fix: Use email and password properties instead of invalid passcode
     email: 'admin@example.com',
-    password: '0000'
-  },
-  {
-    id: 'a2',
-    name: '이도전',
-    department: '서울특별시 디지털정책관',
-    role: '데이터 분석관',
-    certType: CertificationType.BLUE,
-    vision: "현장의 문제를 AI 기술로 해결하는 실천적 전문가가 되겠습니다.",
-    imageUrl: 'https://i.pravatar.cc/600?u=a2',
-    registeredAt: '2025.02.01',
-    achievement: 'AI 기반 실시간 교통 최적화 알고리즘 서울시 전역 확대 적용',
-    status: 'APPROVED',
-    viewCount: 856,
-    // Fix: Use email and password properties instead of invalid passcode
-    email: 'challenger@example.com',
-    password: '0000'
-  },
-  {
-    id: 'a3',
-    name: '박미래',
-    department: '과학기술정보통신부',
-    role: 'AI 정책 사무관',
-    certType: CertificationType.GREEN,
-    vision: "AI 거버넌스의 초석을 다지고 국가 경쟁력을 강화하겠습니다.",
-    imageUrl: 'https://i.pravatar.cc/600?u=a3',
-    registeredAt: '2025.02.10',
-    achievement: '국가 AI 윤리 가이드라인 제정 및 공공 가이드 보급',
-    status: 'APPROVED',
-    viewCount: 432,
-    // Fix: Use email and password properties instead of invalid passcode
-    email: 'future@example.com',
-    password: '0000'
-  },
-  {
-    id: 'a4',
-    name: '최지능',
-    department: '한국지능정보사회진흥원(NIA)',
-    role: 'AI 인프라 팀장',
-    certType: CertificationType.BLACK,
-    vision: "모두가 누리는 안전하고 따뜻한 AI 생태계를 구축합니다.",
-    imageUrl: 'https://i.pravatar.cc/600?u=a4',
-    registeredAt: '2025.02.12',
-    projectUrl: 'https://vibecoding.com/example-nia',
-    achievement: '세계 최초 공공부문 특화 LLM 평가 지표 개발 및 적용',
-    status: 'APPROVED',
-    viewCount: 2105,
-    // Fix: Use email and password properties instead of invalid passcode
-    email: 'nia@example.com',
     password: '0000'
   }
 ];
 
 export const CERT_DETAILS = {
   [CertificationType.GREEN]: {
-    title: 'GREEN EXPERT',
-    desc: '공공 AI 실무 기획 전문가',
+    title: 'AI 챔피언 그린 (Green)',
+    label: '트랙2: AI 융합 실무자',
+    desc: '노코드 기반의 AI 실무 적용 역량 인증',
+    criteria: [
+      '생성형 AI를 활용한 행정 문서 및 홍보물 기획',
+      '노코드 도구를 활용한 정책 인사이트 도출 및 시각화',
+      '민원 매뉴얼 기반 응답형 챗봇 서비스 구현'
+    ],
     color: 'text-emerald-400',
-    glow: 'shadow-[0_0_20px_rgba(52,211,153,0.3)]',
-    border: 'border-emerald-500/40',
-    bg: 'from-emerald-900/40 to-transparent',
+    glow: 'shadow-[0_0_20px_rgba(52,211,153,0.1)]',
+    border: 'border-emerald-500/20',
+    bg: 'from-emerald-950/20 to-black',
     accent: 'bg-emerald-500',
-    gradient: 'linear-gradient(135deg, #10b981 0%, #059669 100%)'
+    icon: '◈'
   },
   [CertificationType.BLUE]: {
-    title: 'BLUE PROFESSIONAL',
-    desc: 'AI 알고리즘 및 구현 마스터',
+    title: 'AI 챔피언 블루 (Blue)',
+    label: '트랙3: AI 전환 실행자',
+    desc: '개발·모델링 기반의 AI 실행 역량 인증',
+    criteria: [
+      '머신러닝 알고리즘 기반 에너지 사용량 예측 모델 설계',
+      'LLM 및 파이썬 자동화를 통한 업무 프로세스 개선',
+      '데이터 분석 및 모델링을 통한 공공 서비스 최적화'
+    ],
     color: 'text-blue-400',
-    glow: 'shadow-[0_0_20px_rgba(96,165,250,0.3)]',
-    border: 'border-blue-500/40',
-    bg: 'from-blue-900/40 to-transparent',
+    glow: 'shadow-[0_0_20px_rgba(96,165,250,0.1)]',
+    border: 'border-blue-500/20',
+    bg: 'from-blue-950/20 to-black',
     accent: 'bg-blue-500',
-    gradient: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)'
+    icon: '✦'
   },
   [CertificationType.BLACK]: {
-    title: 'BLACK MASTER',
-    desc: '대한민국 국가 대표 AI 마스터',
+    title: 'AI 챔피언 블랙 (Black)',
+    label: '트랙4: AI 마스터 (예정)',
+    desc: '고급 AI 기술 이해 및 혁신 리딩 전문가',
+    criteria: [
+      '범정부 AI 인프라 및 정책 수립 리딩',
+      '고급 분석 기술 및 생성형 AI 기술 전략 수립',
+      '2026년 도입 예정인 최고 등급 마스터 과정'
+    ],
     color: 'text-yellow-500',
-    glow: 'shadow-[0_0_30px_rgba(234,179,8,0.4)]',
-    border: 'border-yellow-600/50',
-    bg: 'from-yellow-900/40 to-transparent',
+    glow: 'shadow-[0_0_30px_rgba(234,179,8,0.2)]',
+    border: 'border-yellow-600/30',
+    bg: 'from-yellow-950/20 to-black',
     accent: 'bg-yellow-500',
-    gradient: 'linear-gradient(135deg, #bf953f 0%, #fcf6ba 45%, #b38728 100%)'
+    icon: '★'
   }
 };

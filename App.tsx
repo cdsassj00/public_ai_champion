@@ -8,6 +8,7 @@ import { CERT_DETAILS } from './constants';
 import Navigation from './components/Navigation';
 import Hero from './components/Hero';
 import ChampionCard from './components/ChampionCard';
+import PlaceholderCard from './components/PlaceholderCard';
 import RegistrationForm from './components/RegistrationForm';
 import Background3D from './components/Background3D';
 import ChampionModal from './components/ChampionModal';
@@ -76,7 +77,11 @@ const App: React.FC = () => {
     );
   }, [champions, searchQuery]);
 
-  const placeholderCount = Math.max(3, 12 - filteredChampions.length);
+  const placeholdersNeeded = useMemo(() => {
+    if (searchQuery.trim()) return 0;
+    const minSlots = 18; 
+    return Math.max(0, minSlots - filteredChampions.length);
+  }, [filteredChampions, searchQuery]);
 
   return (
     <div className="relative min-h-screen bg-black text-white selection:bg-yellow-500 selection:text-black overflow-x-hidden">
@@ -88,7 +93,7 @@ const App: React.FC = () => {
           {view === 'HOME' && <Hero onExplore={() => setView('HALL_OF_FAME')} onJoin={() => setView('REGISTER')} />}
 
           {view === 'HALL_OF_FAME' && (
-            <div className="max-w-[1600px] mx-auto px-2 sm:px-6 py-12 md:py-24">
+            <div className="max-w-[1600px] mx-auto px-4 sm:px-10 py-12 md:py-24">
               <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} className="mb-14 md:mb-20 text-center">
                 <span className="text-[10px] md:text-xs font-black tracking-[0.4em] text-yellow-500/60 uppercase block mb-4">Official Registry</span>
                 <h2 className="text-3xl md:text-5xl font-light serif-title mb-6 tracking-tight uppercase break-keep">공공 AI 챔피언 <span className="gold-text font-black">명예의 전당</span></h2>
@@ -100,19 +105,6 @@ const App: React.FC = () => {
                       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
                     </div>
                     <input type="text" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} placeholder="이름 또는 부처명으로 혁신가를 찾으세요" className="w-full bg-white/[0.02] border border-white/10 pl-14 pr-14 py-5 rounded-full text-sm md:text-base font-light focus:outline-none focus:border-yellow-500/50 focus:bg-white/[0.05] transition-all backdrop-blur-3xl shadow-[0_0_50px_rgba(0,0,0,0.5)]" />
-                    {searchQuery && (
-                      <button onClick={() => setSearchQuery('')} className="absolute right-6 p-2 text-white/20 hover:text-white transition-colors">
-                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-                      </button>
-                    )}
-                  </div>
-                  <div className="mt-4 flex items-center justify-center space-x-6 text-[9px] md:text-[10px] font-black tracking-widest uppercase">
-                    <div className="flex items-center space-x-2">
-                       <span className="text-white/20">Discovery:</span>
-                       <motion.span key={filteredChampions.length} initial={{ opacity: 0, y: -5 }} animate={{ opacity: 1, y: 0 }} className="text-yellow-500">{filteredChampions.length} Found</motion.span>
-                    </div>
-                    <div className="w-[1px] h-3 bg-white/10"></div>
-                    <div className="text-white/20">Order: <span className="text-white/40 italic">Randomized</span></div>
                   </div>
                 </div>
               </motion.div>
@@ -123,28 +115,15 @@ const App: React.FC = () => {
                   <span className="text-[8px] font-bold tracking-widest uppercase">Syncing Registry...</span>
                 </div>
               ) : (
-                <motion.div layout className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-2 md:gap-4 lg:gap-5">
+                <motion.div layout className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 md:gap-6 lg:gap-8">
                   <AnimatePresence mode="popLayout">
                     {filteredChampions.map((champion, index) => (
                       <ChampionCard key={champion.id} champion={champion} index={index} onClick={handleSelectChampion} />
                     ))}
+                    {Array.from({ length: placeholdersNeeded }).map((_, idx) => (
+                      <PlaceholderCard key={`placeholder-${idx}`} index={idx} onClick={() => setView('REGISTER')} />
+                    ))}
                   </AnimatePresence>
-                  {!searchQuery && Array.from({ length: placeholderCount }).map((_, i) => (
-                    <motion.div key={`placeholder-${i}`} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.1 }} onClick={() => setView('REGISTER')} className="group relative flex flex-col bg-neutral-950/40 border border-white/5 overflow-hidden transition-all duration-500 cursor-pointer aspect-[3/4.2] sm:aspect-auto">
-                       <div className="relative aspect-square bg-neutral-900/50 flex items-center justify-center overflow-hidden">
-                          <svg className="w-1/2 h-1/2 text-white/5 opacity-40 group-hover:opacity-100 group-hover:text-yellow-500/20 transition-all duration-700" fill="currentColor" viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" /></svg>
-                          <div className="absolute inset-0 border-2 border-dashed border-white/5 group-hover:border-yellow-500/20 transition-colors"></div>
-                          <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                             <div className="bg-black/95 backdrop-blur-2xl px-5 py-2.5 border border-white/10 shadow-2xl rounded-sm">
-                               <span className="text-[9px] font-black tracking-[0.3em] text-white uppercase">Your Place Here</span>
-                             </div>
-                          </div>
-                       </div>
-                       <div className="p-2.5 sm:p-4 flex flex-col items-center justify-center h-full opacity-10 group-hover:opacity-40 transition-opacity">
-                          <span className="text-[7px] font-bold tracking-[0.5em] uppercase">Pending Data</span>
-                       </div>
-                    </motion.div>
-                  ))}
                 </motion.div>
               )}
             </div>
@@ -152,20 +131,82 @@ const App: React.FC = () => {
 
           {view === 'REGISTER' && <div className="py-12 md:py-24"><RegistrationForm onSuccess={() => setView('HALL_OF_FAME')} /></div>}
           {view === 'EDIT_PROFILE' && editingChampion && <div className="py-12 md:py-24"><RegistrationForm onSuccess={() => { setView('HALL_OF_FAME'); setEditingChampion(null); }} editData={editingChampion} /></div>}
+          
           {view === 'ABOUT' && (
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 py-20">
-               <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="text-center mb-16">
-                  <h2 className="text-3xl md:text-6xl font-black serif-title mb-6 uppercase tracking-tighter">Certification</h2>
-                  <div className="w-12 h-1 bg-yellow-500/30 mx-auto mb-8"></div>
+            <div className="max-w-6xl mx-auto px-6 py-20">
+               <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} className="text-center mb-24">
+                  <h2 className="text-3xl md:text-5xl font-black serif-title mb-8 tracking-tighter uppercase leading-tight">
+                    공공부문 AI 챔피언 <br/><span className="gold-text">역량인증 체계 가이드</span>
+                  </h2>
+                  <p className="max-w-3xl mx-auto text-white/50 font-light leading-relaxed text-sm md:text-base break-keep">
+                    행정안전부는 공공행정 분야의 AI 대전환을 주도할 '문제해결형 인재'를 양성하기 위해<br/>
+                    대상과 수준별로 4단계 교육과정(공공 AI 역량 트랙)과 연계된 인증 제도를 운영합니다.
+                  </p>
                </motion.div>
-               <div className="grid grid-cols-1 gap-6 md:gap-10">
-                  {Object.entries(CERT_DETAILS).map(([key, detail]) => (
-                    <div key={key} className="bg-neutral-950/50 p-6 md:p-10 border border-white/5 rounded-sm">
-                      <span className={`text-[10px] font-black tracking-widest uppercase mb-2 block ${detail.color}`}>{key} RANK</span>
-                      <h3 className="text-xl md:text-3xl font-bold mb-4">{detail.desc}</h3>
+
+               <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                  {Object.entries(CERT_DETAILS).map(([key, detail], idx) => (
+                    <motion.div 
+                      key={key}
+                      initial={{ opacity: 0, y: 20 }}
+                      whileInView={{ opacity: 1, y: 0 }}
+                      transition={{ delay: idx * 0.1 }}
+                      viewport={{ once: true }}
+                      className={`group relative bg-neutral-900/50 border ${detail.border} rounded-sm p-8 md:p-10 flex flex-col h-full transition-all duration-500 hover:bg-neutral-900 ${detail.glow}`}
+                    >
+                      <div className={`text-4xl mb-6 ${detail.color} opacity-60`}>{detail.icon}</div>
+                      <div className="mb-8">
+                        <span className={`text-[9px] font-black tracking-[0.3em] uppercase mb-2 block ${detail.color}`}>{detail.label}</span>
+                        <h3 className="text-xl font-bold mb-3 serif-title">{detail.title}</h3>
+                        <p className="text-white/60 text-xs font-light leading-relaxed break-keep">{detail.desc}</p>
+                      </div>
+                      
+                      <div className="space-y-4 mb-10 flex-1">
+                        <h4 className="text-[9px] font-black uppercase tracking-widest text-white/30 border-l border-yellow-500/50 pl-2">주요 인증 과제 예시</h4>
+                        {detail.criteria.map((c, i) => (
+                          <div key={i} className="flex items-start space-x-3">
+                            <div className={`mt-1.5 w-1 h-1 rounded-full ${detail.accent} opacity-40`}></div>
+                            <p className="text-xs text-white/50 font-light leading-snug break-keep">{c}</p>
+                          </div>
+                        ))}
+                      </div>
+
+                      <div className="pt-6 border-t border-white/5">
+                        <span className="text-[8px] font-bold text-white/20 uppercase tracking-widest block mb-1">Pass Criteria</span>
+                        <span className="text-xs font-mono text-yellow-500/80 tracking-tight">수행평가 75점 이상 획득 시 인증</span>
+                      </div>
+                    </motion.div>
+                  ))}
+               </div>
+
+               <div className="mt-32 grid grid-cols-1 md:grid-cols-3 gap-12 border-t border-white/5 pt-20">
+                  {[
+                    { title: '교육과정형', icon: '✎', desc: '행안부 AI 종합 교육과정 참여 후 과제 수행평가를 통한 인증' },
+                    { title: '자기주도형', icon: '⚡', desc: '민간 교육 수료 등 역량 보유자 대상 수행평가 응시를 통한 인증' },
+                    { title: '자격연계형', icon: '⚙', desc: '지정 AI 자격증(AICE, ADP 등) 보유자 대상 지정과목 이수 인증' }
+                  ].map((method, i) => (
+                    <div key={i} className="flex flex-col items-center text-center">
+                      <div className="w-12 h-12 bg-white/5 rounded-full flex items-center justify-center text-xl text-yellow-500 mb-6">{method.icon}</div>
+                      <h4 className="text-sm font-bold mb-3 tracking-tight">{method.title}</h4>
+                      <p className="text-[11px] text-white/40 leading-relaxed break-keep">{method.desc}</p>
                     </div>
                   ))}
                </div>
+
+               <motion.div 
+                initial={{ opacity: 0 }}
+                whileInView={{ opacity: 1 }}
+                className="mt-40 p-12 bg-white/[0.02] border border-white/5 text-center rounded-sm"
+               >
+                 <span className="text-[10px] font-black uppercase tracking-[0.5em] text-yellow-500/40 mb-6 block">Future of Public AI</span>
+                 <h3 className="text-2xl md:text-3xl font-light serif-title mb-10 tracking-tight">"2030년까지 2만 명의 <span className="gold-text font-black">AI 챔피언</span>이 탄생합니다."</h3>
+                 <button 
+                  onClick={() => setView('REGISTER')}
+                  className="px-12 py-4 bg-yellow-500 text-black font-black uppercase tracking-[0.3em] text-[10px] hover:bg-yellow-400 transition-all shadow-xl"
+                 >
+                   Register My Record
+                 </button>
+               </motion.div>
             </div>
           )}
         </motion.main>
@@ -179,7 +220,7 @@ const App: React.FC = () => {
       />
 
       <footer className="py-12 border-t border-white/5 relative z-10 bg-black text-center text-[7px] md:text-[9px] text-white/10 tracking-[0.2em] uppercase font-bold">
-        &copy; 2025 AI Champion Hall of Fame. National Digital Initiative.
+        &copy; 2025 AI Champion Hall of Fame. National Digital Initiative. All Rights Reserved.
       </footer>
     </div>
   );
