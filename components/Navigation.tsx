@@ -1,5 +1,4 @@
 
-import React from 'react';
 import { ViewState } from '../types';
 
 interface NavigationProps {
@@ -19,7 +18,7 @@ const Navigation: React.FC<NavigationProps> = ({ currentView, setView }) => {
             <span className="text-black font-black text-lg">AI</span>
           </div>
           <span className="text-xl font-bold tracking-tight serif-title hidden sm:block">
-            AI <span className="text-yellow-500">챔피언</span>
+            공공 <span className="text-yellow-500">AI 챔피언</span>
           </span>
         </div>
         

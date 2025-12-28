@@ -3,10 +3,10 @@ import { defineConfig, loadEnv } from 'vite';
 import react from '@vitejs/plugin-react';
 
 export default defineConfig(({ mode }) => {
+  // loadEnv는 세 번째 인자가 ''일 때 시스템 환경 변수(Vercel Envs)를 모두 로드합니다.
   const env = loadEnv(mode, process.cwd(), '');
   
-  // API_KEY를 찾기 위한 우선순위: Vercel Env > Vite Env > Fallback
-  const resolvedApiKey = env.API_KEY || env.VITE_API_KEY || env.VITE_GEMINI_API_KEY || "";
+  const resolvedApiKey = env.API_KEY || env.VITE_API_KEY || "";
   
   return {
     plugins: [react()],

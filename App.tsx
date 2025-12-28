@@ -95,7 +95,7 @@ const App: React.FC = () => {
           {view === 'HALL_OF_FAME' && (
             <div className="max-w-[1600px] mx-auto px-4 sm:px-10 py-12 md:py-24">
               <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} className="mb-14 md:mb-20 text-center">
-                <span className="text-[10px] md:text-xs font-black tracking-[0.4em] text-yellow-500/60 uppercase block mb-4">Official Registry</span>
+                <span className="text-[10px] md:text-xs font-black tracking-[0.4em] text-yellow-500/60 uppercase block mb-4">공식 기록소</span>
                 <h2 className="text-3xl md:text-5xl font-light serif-title mb-6 tracking-tight uppercase break-keep">공공 AI 챔피언 <span className="gold-text font-black">명예의 전당</span></h2>
                 
                 <div className="max-w-2xl mx-auto relative group px-4">
@@ -112,7 +112,7 @@ const App: React.FC = () => {
               {isLoading ? (
                 <div className="flex flex-col items-center justify-center py-20 opacity-30">
                   <div className="w-5 h-5 border-2 border-yellow-500 border-t-transparent rounded-full animate-spin mb-3"></div>
-                  <span className="text-[8px] font-bold tracking-widest uppercase">Syncing Registry...</span>
+                  <span className="text-[8px] font-bold tracking-widest uppercase">기록 동기화 중...</span>
                 </div>
               ) : (
                 <motion.div layout className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 md:gap-6 lg:gap-8">
@@ -172,7 +172,7 @@ const App: React.FC = () => {
                       </div>
 
                       <div className="pt-6 border-t border-white/5">
-                        <span className="text-[8px] font-bold text-white/20 uppercase tracking-widest block mb-1">Pass Criteria</span>
+                        <span className="text-[8px] font-bold text-white/20 uppercase tracking-widest block mb-1">통과 기준</span>
                         <span className="text-xs font-mono text-yellow-500/80 tracking-tight">수행평가 75점 이상 획득 시 인증</span>
                       </div>
                     </motion.div>
@@ -198,13 +198,13 @@ const App: React.FC = () => {
                 whileInView={{ opacity: 1 }}
                 className="mt-40 p-12 bg-white/[0.02] border border-white/5 text-center rounded-sm"
                >
-                 <span className="text-[10px] font-black uppercase tracking-[0.5em] text-yellow-500/40 mb-6 block">Future of Public AI</span>
+                 <span className="text-[10px] font-black uppercase tracking-[0.5em] text-yellow-500/40 mb-6 block">대한민국 공공 AI의 미래</span>
                  <h3 className="text-2xl md:text-3xl font-light serif-title mb-10 tracking-tight">"2030년까지 2만 명의 <span className="gold-text font-black">AI 챔피언</span>이 탄생합니다."</h3>
                  <button 
                   onClick={() => setView('REGISTER')}
                   className="px-12 py-4 bg-yellow-500 text-black font-black uppercase tracking-[0.3em] text-[10px] hover:bg-yellow-400 transition-all shadow-xl"
                  >
-                   Register My Record
+                   기록 등록하기
                  </button>
                </motion.div>
             </div>
@@ -220,7 +220,7 @@ const App: React.FC = () => {
       />
 
       <footer className="py-12 border-t border-white/5 relative z-10 bg-black text-center text-[7px] md:text-[9px] text-white/10 tracking-[0.2em] uppercase font-bold">
-        &copy; 2025 AI Champion Hall of Fame. National Digital Initiative. All Rights Reserved.
+        &copy; 2025 공공 AI 챔피언 명예의 전당. 모든 권리 보유.
       </footer>
     </div>
   );

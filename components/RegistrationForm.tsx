@@ -183,9 +183,9 @@ const RegistrationForm: React.FC<RegistrationFormProps> = ({ onSuccess, editData
     <div className="max-w-5xl mx-auto py-12 px-6">
       <div className="text-center mb-16">
         <h2 className="text-4xl md:text-5xl font-black serif-title mb-4 tracking-tighter uppercase">
-          {isEditMode ? '챔피언 기록' : 'AI 챔피언'} <span className="gold-text">{isEditMode ? '업데이트' : '등록'}</span>
+          {isEditMode ? '챔피언 기록' : '공공 AI 챔피언'} <span className="gold-text">{isEditMode ? '업데이트' : '등록'}</span>
         </h2>
-        <p className="text-yellow-500/60 font-black text-[10px] tracking-[0.4em] uppercase">National Digital Excellence Registry</p>
+        <p className="text-yellow-500/60 font-black text-[10px] tracking-[0.4em] uppercase">국가 디지털 혁신 기록물</p>
       </div>
 
       <form onSubmit={handleSubmit} className="grid grid-cols-1 lg:grid-cols-12 gap-12">
@@ -195,7 +195,7 @@ const RegistrationForm: React.FC<RegistrationFormProps> = ({ onSuccess, editData
             {isAnyLoading ? (
               <div className="flex flex-col items-center">
                 <div className="w-12 h-12 border-4 border-yellow-500 border-t-transparent rounded-full animate-spin mb-4"></div>
-                <p className="text-[10px] font-black tracking-widest text-yellow-500 uppercase animate-pulse">AI 엔진 가동 중...</p>
+                <p className="text-[10px] font-black tracking-widest text-yellow-500 uppercase animate-pulse">AI 엔진 연산 중...</p>
               </div>
             ) : formData.imageUrl || localBase64 ? (
               <img src={localBase64 || formData.imageUrl} className="w-full h-full object-cover" alt="Profile" />
@@ -205,7 +205,7 @@ const RegistrationForm: React.FC<RegistrationFormProps> = ({ onSuccess, editData
                   <span className="text-3xl text-white">+</span>
                 </div>
                 <p className="text-[10px] font-black uppercase tracking-widest text-white">사진 업로드</p>
-                <p className="text-[8px] text-white/40 mt-2 uppercase tracking-tighter">Click or Drag to Upload</p>
+                <p className="text-[8px] text-white/40 mt-2 uppercase tracking-tighter">클릭 또는 파일을 드래그하세요</p>
               </div>
             )}
             <input type="file" ref={fileInputRef} onChange={handleImageUpload} className="absolute inset-0 opacity-0 cursor-pointer" accept="image/*" disabled={isAnyLoading} />
@@ -217,17 +217,17 @@ const RegistrationForm: React.FC<RegistrationFormProps> = ({ onSuccess, editData
             disabled={!formData.imageUrl || isAnyLoading}
             className={`w-full py-5 border-2 font-black text-[11px] tracking-[0.3em] uppercase transition-all duration-500 ${formData.imageUrl && !isAnyLoading ? 'bg-white/5 border-yellow-500/40 text-yellow-500 hover:bg-yellow-500 hover:text-black shadow-lg shadow-yellow-500/10' : 'opacity-20 cursor-not-allowed border-white/10'}`}
           >
-            {isTransforming ? 'AI RENDERING...' : 'Gemini Pro 예술적 변환'}
+            {isTransforming ? 'AI 렌더링 중...' : 'Gemini 예술적 변환'}
           </button>
 
           <div className="p-8 bg-white/[0.03] border border-white/10 rounded-sm space-y-6 shadow-xl">
              <div className="flex flex-col space-y-3">
-               <label className="text-[10px] font-black uppercase tracking-widest text-yellow-500">관리용 이메일 (Email)</label>
+               <label className="text-[10px] font-black uppercase tracking-widest text-yellow-500">관리용 이메일</label>
                <input required type="email" value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} className="bg-black/60 border border-white/10 p-4 text-sm text-white focus:border-yellow-500 outline-none transition-all" placeholder="본인 확인용 이메일" />
              </div>
              <div className="flex flex-col space-y-3">
-               <label className="text-[10px] font-black uppercase tracking-widest text-yellow-500">관리용 비밀번호 (Password)</label>
-               <input required type="password" value={formData.password} onChange={e => setFormData({...formData, password: e.target.value})} className="bg-black/60 border border-white/10 p-4 text-sm text-white focus:border-yellow-500 outline-none transition-all" placeholder="기록 수정/삭제 비밀번호" />
+               <label className="text-[10px] font-black uppercase tracking-widest text-yellow-500">관리용 비밀번호</label>
+               <input required type="password" value={formData.password} onChange={e => setFormData({...formData, password: e.target.value})} className="bg-black/60 border border-white/10 p-4 text-sm text-white focus:border-yellow-500 outline-none transition-all" placeholder="기록 수정용 비밀번호" />
              </div>
           </div>
         </div>
@@ -236,22 +236,22 @@ const RegistrationForm: React.FC<RegistrationFormProps> = ({ onSuccess, editData
         <div className="lg:col-span-7 space-y-8 glass p-8 md:p-14 rounded-sm border-white/10">
           <div className="grid grid-cols-2 gap-8">
             <div className="flex flex-col space-y-3">
-              <label className="text-[11px] font-black uppercase tracking-widest text-white/70">성함 (Name)</label>
+              <label className="text-[11px] font-black uppercase tracking-widest text-white/70">성함</label>
               <input required type="text" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} className="bg-transparent border-b-2 border-white/10 py-3 focus:border-yellow-500 outline-none text-xl font-bold text-white transition-all" />
             </div>
             <div className="flex flex-col space-y-3">
-              <label className="text-[11px] font-black uppercase tracking-widest text-white/70">소속 (Department)</label>
+              <label className="text-[11px] font-black uppercase tracking-widest text-white/70">소속</label>
               <input required type="text" value={formData.department} onChange={e => setFormData({...formData, department: e.target.value})} className="bg-transparent border-b-2 border-white/10 py-3 focus:border-yellow-500 outline-none text-xl font-bold text-white transition-all" />
             </div>
           </div>
 
           <div className="flex flex-col space-y-3">
-            <label className="text-[11px] font-black uppercase tracking-widest text-white/70">직위 / 역할 (Role)</label>
+            <label className="text-[11px] font-black uppercase tracking-widest text-white/70">직위 / 역할</label>
             <input required type="text" value={formData.role} onChange={e => setFormData({...formData, role: e.target.value})} className="bg-transparent border-b-2 border-white/10 py-3 focus:border-yellow-500 outline-none text-base text-white/90 transition-all" placeholder="예: 디지털전무 기획관, 데이터 분석가 등" />
           </div>
 
           <div className="flex flex-col space-y-4">
-            <label className="text-[11px] font-black uppercase tracking-widest text-white/70">Certification Rank (인증 등급)</label>
+            <label className="text-[11px] font-black uppercase tracking-widest text-white/70">인증 등급 (Certification)</label>
             <div className="grid grid-cols-3 gap-3">
               {[CertificationType.GREEN, CertificationType.BLUE, CertificationType.BLACK].map(type => (
                 <button key={type} type="button" onClick={() => setFormData({...formData, certType: type})} className={`py-4 border-2 text-[10px] font-black tracking-widest transition-all ${formData.certType === type ? 'bg-yellow-500 text-black border-yellow-500 shadow-lg' : 'border-white/10 text-white/40 hover:border-white/30'}`}>{type}</button>
@@ -261,7 +261,7 @@ const RegistrationForm: React.FC<RegistrationFormProps> = ({ onSuccess, editData
 
           <div className="flex flex-col space-y-4 pt-4 border-t border-white/5">
             <div className="flex items-center justify-between">
-              <label className="text-[11px] font-black uppercase tracking-widest text-white/70">Visionary Statement (포부)</label>
+              <label className="text-[11px] font-black uppercase tracking-widest text-white/70">혁신 포부</label>
               <button type="button" onClick={async () => {
                 if (!formData.vision) return alert('포부를 입력해주세요.');
                 setIsPolishing(true);
@@ -269,14 +269,14 @@ const RegistrationForm: React.FC<RegistrationFormProps> = ({ onSuccess, editData
                   const pol = await polishVision(formData.name, formData.department, formData.vision);
                   setFormData(prev => ({...prev, vision: pol}));
                 } finally { setIsPolishing(false); }
-              }} className="text-[9px] font-black text-yellow-500 uppercase px-3 py-1.5 bg-yellow-500/10 border border-yellow-500/30 hover:bg-yellow-500 hover:text-black transition-all">{isPolishing ? 'Refining...' : 'AI 문장 교정'}</button>
+              }} className="text-[9px] font-black text-yellow-500 uppercase px-3 py-1.5 bg-yellow-500/10 border border-yellow-500/30 hover:bg-yellow-500 hover:text-black transition-all">{isPolishing ? '교정 중...' : 'AI 문장 교정'}</button>
             </div>
             <textarea required rows={3} value={formData.vision} onChange={e => setFormData({...formData, vision: e.target.value})} className="bg-white/[0.04] border border-white/10 p-5 text-sm font-medium italic text-white focus:border-yellow-500 outline-none leading-relaxed transition-all placeholder:text-white/10" placeholder="AI를 통해 실현하고자 하는 가치를 입력하세요." />
           </div>
 
           <div className="flex flex-col space-y-4">
             <div className="flex items-center justify-between">
-              <label className="text-[11px] font-black uppercase tracking-widest text-white/70">Impact Assessment (주요 업적)</label>
+              <label className="text-[11px] font-black uppercase tracking-widest text-white/70">주요 혁신 업적</label>
               <button type="button" onClick={async () => {
                 if (!formData.name || !formData.department) return alert('성함과 소속을 먼저 입력해주세요.');
                 setIsSuggesting(true);
@@ -284,7 +284,7 @@ const RegistrationForm: React.FC<RegistrationFormProps> = ({ onSuccess, editData
                   const sugg = await suggestAchievement(formData.name, formData.department, formData.role);
                   setFormData(prev => ({...prev, achievement: sugg}));
                 } finally { setIsSuggesting(false); }
-              }} className="text-[9px] font-black text-yellow-500 uppercase px-3 py-1.5 bg-yellow-500/10 border border-yellow-500/30 hover:bg-yellow-500 hover:text-black transition-all">{isSuggesting ? 'Thinking...' : 'AI 업적 추천'}</button>
+              }} className="text-[9px] font-black text-yellow-500 uppercase px-3 py-1.5 bg-yellow-500/10 border border-yellow-500/30 hover:bg-yellow-500 hover:text-black transition-all">{isSuggesting ? '분석 중...' : 'AI 업적 추천'}</button>
             </div>
             <textarea required rows={3} value={formData.achievement} onChange={e => setFormData({...formData, achievement: e.target.value})} className="bg-white/[0.04] border border-white/10 p-5 text-sm font-medium text-white focus:border-yellow-500 outline-none leading-relaxed transition-all placeholder:text-white/10" placeholder="주요 AI 혁신 사례 및 성과를 기록하세요." />
           </div>
@@ -295,7 +295,7 @@ const RegistrationForm: React.FC<RegistrationFormProps> = ({ onSuccess, editData
               disabled={isAnyLoading} 
               className={`w-full py-6 font-black uppercase tracking-[0.4em] text-[12px] transition-all duration-500 rounded-sm ${isAnyLoading ? 'opacity-20 cursor-not-allowed bg-white/10' : 'bg-yellow-500 text-black hover:bg-yellow-400 shadow-2xl shadow-yellow-500/20 active:scale-[0.98]'}`}
             >
-              {isSubmitting ? 'SYCHRONIZING...' : '명예의 전당 등록하기'}
+              {isSubmitting ? '데이터 동기화 중...' : '명예의 전당 등록하기'}
             </button>
           </div>
         </div>

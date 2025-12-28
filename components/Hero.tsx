@@ -26,7 +26,7 @@ const Hero: React.FC<HeroProps> = ({ onExplore, onJoin }) => {
           className="inline-block mb-6 md:mb-10 px-4 md:px-6 py-2 rounded-full border border-white/10 bg-white/5 backdrop-blur-xl"
         >
           <span className="text-[8px] md:text-[10px] font-bold tracking-[0.3em] text-white/60 uppercase">
-            Excellence in Digital Governance
+            디지털 정부 혁신의 주역
           </span>
         </motion.div>
         
@@ -38,7 +38,7 @@ const Hero: React.FC<HeroProps> = ({ onExplore, onJoin }) => {
           className="text-4xl md:text-7xl font-light serif-title leading-tight mb-6 md:mb-10 tracking-tight break-keep"
         >
           대한민국 공공부문<br />
-          <span className="gold-text font-black">AI Champion</span>
+          <span className="gold-text font-black">AI 챔피언 명예의 전당</span>
         </motion.h1>
         
         <motion.p 
@@ -48,7 +48,7 @@ const Hero: React.FC<HeroProps> = ({ onExplore, onJoin }) => {
           transition={{ duration: 1, delay: 0.4 }}
           className="text-sm md:text-lg text-white/40 mb-10 md:mb-14 max-w-xl mx-auto leading-relaxed font-light break-keep px-4"
         >
-          대한민국의 디지털 미래를 설계하는 리더들을 위한 고품격 명예의 전당. 당신의 업적을 데이터베이스에 영구히 기록하세요.
+          대한민국의 디지털 미래를 설계하는 리더들을 위한 고품격 기록소. 당신의 혁신적인 업적을 국가 데이터베이스에 영구히 기록하세요.
         </motion.p>
 
         <motion.div 
@@ -82,7 +82,7 @@ const Hero: React.FC<HeroProps> = ({ onExplore, onJoin }) => {
         className="absolute bottom-6 md:bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center space-y-4"
       >
         <div className="w-[1px] h-8 md:h-10 bg-gradient-to-b from-transparent via-white/50 to-transparent"></div>
-        <span className="text-[8px] tracking-[0.4em] font-medium uppercase text-white/20">DISCOVER</span>
+        <span className="text-[8px] tracking-[0.4em] font-medium uppercase text-white/20">둘러보기</span>
       </motion.div>
     </div>
   );
