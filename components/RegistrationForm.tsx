@@ -1,14 +1,17 @@
 
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { CertificationType, Champion } from '../types';
+import { apiService } from '../services/apiService';
 import { storageService } from '../services/storageService';
 import { polishVision, transformPortrait, suggestProfileContent } from '../services/geminiService';
 
 interface RegistrationFormProps {
   onSuccess: () => void;
+  editData?: Champion | null;
 }
 
-const RegistrationForm: React.FC<RegistrationFormProps> = ({ onSuccess }) => {
+const RegistrationForm: React.FC<RegistrationFormProps> = ({ onSuccess, editData }) => {
+  const isEditMode = !!editData;
   const [formData, setFormData] = useState({
     name: '',
     department: '',
@@ -19,6 +22,22 @@ const RegistrationForm: React.FC<RegistrationFormProps> = ({ onSuccess }) => {
     projectUrl: '',
     achievement: ''
   });
+
+  useEffect(() => {
+    if (editData) {
+      setFormData({
+        name: editData.name,
+        department: editData.department,
+        role: editData.role,
+        certType: editData.certType,
+        vision: editData.vision,
+        imageUrl: editData.imageUrl,
+        projectUrl: editData.projectUrl || '',
+        achievement: editData.achievement || ''
+      });
+    }
+  }, [editData]);
+
   const [isPolishing, setIsPolishing] = useState(false);
   const [isSuggesting, setIsSuggesting] = useState(false);
   const [isTransforming, setIsTransforming] = useState(false);
@@ -32,8 +51,8 @@ const RegistrationForm: React.FC<RegistrationFormProps> = ({ onSuccess }) => {
       img.src = base64Str;
       img.onload = () => {
         const canvas = document.createElement('canvas');
-        const MAX_WIDTH = 1200;
-        const MAX_HEIGHT = 1200;
+        const MAX_WIDTH = 800;
+        const MAX_HEIGHT = 800;
         let width = img.width;
         let height = img.height;
 
@@ -54,7 +73,7 @@ const RegistrationForm: React.FC<RegistrationFormProps> = ({ onSuccess }) => {
         const ctx = canvas.getContext('2d');
         if (ctx) {
           ctx.drawImage(img, 0, 0, width, height);
-          resolve(canvas.toDataURL('image/jpeg', 0.8));
+          resolve(canvas.toDataURL('image/jpeg', 0.7));
         } else {
           resolve(base64Str);
         }
@@ -131,7 +150,7 @@ const RegistrationForm: React.FC<RegistrationFormProps> = ({ onSuccess }) => {
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.imageUrl) {
       alert('사진을 등록하고 예술적으로 변환해보세요!');
@@ -140,27 +159,45 @@ const RegistrationForm: React.FC<RegistrationFormProps> = ({ onSuccess }) => {
     
     setIsSubmitting(true);
     
-    // 데이터베이스 저장 로직
-    const newChampion: Champion = {
-      id: `champ_${Date.now()}`,
-      ...formData,
-      registeredAt: new Date().toLocaleDateString('ko-KR', { year: 'numeric', month: '2-digit', day: '2-digit' }).replace(/\.$/, ''),
-      status: 'PENDING' // 초기에는 심사 대기 상태로 등록
-    };
-
-    setTimeout(() => {
-      storageService.saveChampion(newChampion);
+    try {
+      if (isEditMode && editData) {
+        const updatedChampion: Champion = {
+          ...editData,
+          ...formData,
+        };
+        await apiService.updateChampion(updatedChampion);
+        alert('프로필 수정이 완료되었습니다.');
+        onSuccess();
+      } else {
+        const newChampion: Champion = {
+          id: `champ_${Date.now()}`,
+          ...formData,
+          registeredAt: new Date().toLocaleDateString('ko-KR', { year: 'numeric', month: '2-digit', day: '2-digit' }).replace(/\.$/, ''),
+          status: 'APPROVED',
+          viewCount: 0
+        };
+        await apiService.createChampion(newChampion);
+        storageService.addOwnership(newChampion.id);
+        alert('명예의 전당 등록이 완료되었습니다.');
+        onSuccess();
+      }
+    } catch (err) {
+      console.error("Save failed:", err);
+      alert('데이터베이스 저장 중 오류가 발생했습니다.');
+    } finally {
       setIsSubmitting(false);
-      alert('명예의 전당 등록이 완료되었습니다. 실제 운영 환경에서는 관리자 승인 후 게시되지만, 현재 데모 버전에서는 즉시 목록에서 확인 가능합니다.');
-      onSuccess();
-    }, 1500);
+    }
   };
 
   return (
     <div className="max-w-4xl mx-auto py-12 px-6">
       <div className="text-center mb-16">
-        <h2 className="text-5xl font-black serif-title mb-4 tracking-tighter uppercase">Join the <span className="gold-text">Elite</span></h2>
-        <p className="text-white/40 font-light italic">"당신의 데이터는 로컬 DB에 안전하게 보존되며 명예의 전당을 완성합니다."</p>
+        <h2 className="text-5xl font-black serif-title mb-4 tracking-tighter uppercase">
+          {isEditMode ? 'Update' : 'Join'} the <span className="gold-text">Elite</span>
+        </h2>
+        <p className="text-white/40 font-light italic">
+          {isEditMode ? '나의 업적을 최신 데이터로 갱신합니다.' : '"당신의 데이터는 영구 데이터베이스에 안전하게 보존됩니다."'}
+        </p>
       </div>
 
       <form onSubmit={handleSubmit} className="grid grid-cols-1 lg:grid-cols-12 gap-12">
@@ -182,7 +219,7 @@ const RegistrationForm: React.FC<RegistrationFormProps> = ({ onSuccess }) => {
                 <div className="w-12 h-12 bg-white/5 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:bg-yellow-500 transition-colors">
                    <svg className="w-6 h-6 text-white/40" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4"></path></svg>
                 </div>
-                <p className="text-[10px] font-bold tracking-widest text-white/30 uppercase">사진을 업로드하려면 클릭하세요</p>
+                <p className="text-[10px] font-bold tracking-widest text-white/30 uppercase">사진 업로드</p>
               </div>
             )}
             <input 
@@ -202,13 +239,6 @@ const RegistrationForm: React.FC<RegistrationFormProps> = ({ onSuccess }) => {
           >
             {isTransforming ? '예술적 재창조 중...' : 'Nano Banana Pro 예술적 변환'}
           </button>
-          <div className="p-4 bg-yellow-500/5 border border-yellow-500/10 rounded-sm">
-             <p className="text-[10px] text-yellow-500 font-bold uppercase tracking-wider mb-2">DB Storage & Portrait System</p>
-             <p className="text-[9px] text-white/40 uppercase tracking-widest leading-loose">
-               이 시스템은 실제 운영 가능한 수준의 영구 데이터 저장소(Local Persistence)를 사용합니다.<br/>
-               나노바나나 프로는 당신의 원본 이미지를 분석하여 최고의 품질로 재창조합니다.
-             </p>
-          </div>
         </div>
 
         <div className="lg:col-span-7 space-y-8 glass p-10 rounded-sm border-white/5">
@@ -277,7 +307,7 @@ const RegistrationForm: React.FC<RegistrationFormProps> = ({ onSuccess }) => {
               value={formData.achievement}
               onChange={e => setFormData({...formData, achievement: e.target.value})}
               className="bg-transparent border-b border-white/10 py-3 focus:outline-none focus:border-yellow-500 transition-colors text-sm text-white/80"
-              placeholder="자랑스러운 성과를 한 문장으로 기록하세요."
+              placeholder="자랑스러운 성과를 기록하세요."
             />
           </div>
 
@@ -324,7 +354,7 @@ const RegistrationForm: React.FC<RegistrationFormProps> = ({ onSuccess }) => {
             disabled={isSubmitting || isOptimizing}
             className="w-full py-5 bg-yellow-500 text-black font-black uppercase tracking-[0.3em] text-xs hover:bg-yellow-400 transition-all disabled:opacity-50 active:scale-95 mt-4"
           >
-            {isSubmitting ? '데이터베이스 저장 중...' : '명예의 전당 공식 등록'}
+            {isSubmitting ? '저장 중...' : isEditMode ? '프로필 업데이트' : '명예의 전당 등록'}
           </button>
         </div>
       </form>

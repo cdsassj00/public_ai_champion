@@ -19,6 +19,7 @@ export interface Champion {
   projectUrl?: string;
   achievement?: string;
   status: ChampionStatus;
+  viewCount: number;
 }
 
-export type ViewState = 'HOME' | 'HALL_OF_FAME' | 'REGISTER' | 'ABOUT';
+export type ViewState = 'HOME' | 'HALL_OF_FAME' | 'REGISTER' | 'ABOUT' | 'EDIT_PROFILE';

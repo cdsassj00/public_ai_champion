@@ -1,7 +1,6 @@
 
 import { Champion, CertificationType } from './types';
 
-// Adding 'status' property to each sample champion to fix type errors
 export const SAMPLE_CHAMPIONS: Champion[] = [
   {
     id: 'a1',
@@ -14,7 +13,8 @@ export const SAMPLE_CHAMPIONS: Champion[] = [
     registeredAt: '2025.01.15',
     projectUrl: 'https://vibecoding.com/example-1',
     achievement: '범정부 초거대 AI 공통 인프라 아키텍처 설계 및 구축 주도',
-    status: 'APPROVED'
+    status: 'APPROVED',
+    viewCount: 1240
   },
   {
     id: 'a2',
@@ -26,7 +26,8 @@ export const SAMPLE_CHAMPIONS: Champion[] = [
     imageUrl: 'https://i.pravatar.cc/600?u=a2',
     registeredAt: '2025.02.01',
     achievement: 'AI 기반 실시간 교통 최적화 알고리즘 서울시 전역 확대 적용',
-    status: 'APPROVED'
+    status: 'APPROVED',
+    viewCount: 856
   },
   {
     id: 'a3',
@@ -38,7 +39,8 @@ export const SAMPLE_CHAMPIONS: Champion[] = [
     imageUrl: 'https://i.pravatar.cc/600?u=a3',
     registeredAt: '2025.02.10',
     achievement: '국가 AI 윤리 가이드라인 제정 및 공공 가이드 보급',
-    status: 'APPROVED'
+    status: 'APPROVED',
+    viewCount: 432
   },
   {
     id: 'a4',
@@ -51,30 +53,40 @@ export const SAMPLE_CHAMPIONS: Champion[] = [
     registeredAt: '2025.02.12',
     projectUrl: 'https://vibecoding.com/example-nia',
     achievement: '세계 최초 공공부문 특화 LLM 평가 지표 개발 및 적용',
-    status: 'APPROVED'
+    status: 'APPROVED',
+    viewCount: 2105
   }
 ];
 
 export const CERT_DETAILS = {
   [CertificationType.GREEN]: {
-    title: 'GREEN CHAMPION',
-    desc: '실무 AI 기획 전문가',
+    title: 'GREEN EXPERT',
+    desc: '공공 AI 실무 기획 전문가',
     color: 'text-emerald-400',
-    bg: 'green-gradient',
-    border: 'border-emerald-500/20'
+    glow: 'shadow-[0_0_20px_rgba(52,211,153,0.3)]',
+    border: 'border-emerald-500/40',
+    bg: 'from-emerald-900/40 to-transparent',
+    accent: 'bg-emerald-500',
+    gradient: 'linear-gradient(135deg, #10b981 0%, #059669 100%)'
   },
   [CertificationType.BLUE]: {
-    title: 'BLUE CHAMPION',
-    desc: 'AI 알고리즘 실행 전문가',
+    title: 'BLUE PROFESSIONAL',
+    desc: 'AI 알고리즘 및 구현 마스터',
     color: 'text-blue-400',
-    bg: 'blue-gradient',
-    border: 'border-blue-500/20'
+    glow: 'shadow-[0_0_20px_rgba(96,165,250,0.3)]',
+    border: 'border-blue-500/40',
+    bg: 'from-blue-900/40 to-transparent',
+    accent: 'bg-blue-500',
+    gradient: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)'
   },
   [CertificationType.BLACK]: {
     title: 'BLACK MASTER',
-    desc: '대한민국 최고 AI 마스터',
+    desc: '대한민국 국가 대표 AI 마스터',
     color: 'text-yellow-500',
-    bg: 'black-gradient',
-    border: 'border-yellow-600/30'
+    glow: 'shadow-[0_0_30px_rgba(234,179,8,0.4)]',
+    border: 'border-yellow-600/50',
+    bg: 'from-yellow-900/40 to-transparent',
+    accent: 'bg-yellow-500',
+    gradient: 'linear-gradient(135deg, #bf953f 0%, #fcf6ba 45%, #b38728 100%)'
   }
 };
