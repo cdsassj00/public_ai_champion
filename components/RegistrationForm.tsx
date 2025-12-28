@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 import { CertificationType, Champion } from '../types';
 import { apiService } from '../services/apiService';
 import { storageService } from '../services/storageService';
-import { polishVision, transformPortrait, suggestProfileContent } from '../services/geminiService';
+import { polishVision, transformPortrait, suggestAchievement } from '../services/geminiService';
 
 interface RegistrationFormProps {
   onSuccess: () => void;
@@ -46,6 +46,7 @@ const RegistrationForm: React.FC<RegistrationFormProps> = ({ onSuccess, editData
   }, [editData]);
 
   const [isPolishing, setIsPolishing] = useState(false);
+  const [isSuggesting, setIsSuggesting] = useState(false);
   const [isTransforming, setIsTransforming] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isOptimizing, setIsOptimizing] = useState(false);
@@ -93,8 +94,7 @@ const RegistrationForm: React.FC<RegistrationFormProps> = ({ onSuccess, editData
         const publicUrl = await apiService.uploadImage(optimizedBase64, `raw_${formData.name || 'user'}`);
         setFormData(prev => ({ ...prev, imageUrl: publicUrl }));
       } catch (error) {
-        console.error('Upload flow error:', error);
-        alert('이미지 업로드 중 오류가 발생했습니다.');
+        alert('업로드 오류 발생');
       } finally {
         setIsUploading(false);
         setIsOptimizing(false);
@@ -118,12 +118,12 @@ const RegistrationForm: React.FC<RegistrationFormProps> = ({ onSuccess, editData
           r.readAsDataURL(blob);
         });
       } catch (e) {
-        console.error("CORS fetch failed, need local base64");
+        console.error("Fetch failed");
       }
     }
 
     if (!base64ToUse) {
-      alert('변환할 이미지 데이터가 없습니다. 다시 업로드해주세요.');
+      alert('이미지를 먼저 업로드해주세요.');
       setIsTransforming(false);
       return;
     }
@@ -138,8 +138,7 @@ const RegistrationForm: React.FC<RegistrationFormProps> = ({ onSuccess, editData
       const storageUrl = await apiService.uploadImage(aiResultBase64, `ai_portrait_${formData.name || 'champion'}`);
       setFormData(prev => ({ ...prev, imageUrl: storageUrl }));
     } catch (error) {
-      console.error("Nano Banana Transformation Failed:", error);
-      alert('예술적 변환 또는 서버 저장 중 오류가 발생했습니다.');
+      alert('AI 변환 중 오류가 발생했습니다.');
     } finally { 
       setIsTransforming(false); 
       setIsUploading(false);
@@ -148,73 +147,64 @@ const RegistrationForm: React.FC<RegistrationFormProps> = ({ onSuccess, editData
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.imageUrl || formData.imageUrl.startsWith('data:')) {
-      alert('이미지가 아직 클라우드에 동기화되지 않았습니다. 잠시만 기다려주세요.');
-      return;
-    }
-    if (!formData.email || !formData.password) { alert('관리용 이메일과 비밀번호를 입력해주세요.'); return; }
+    if (!formData.imageUrl) { alert('사진 등록이 필요합니다.'); return; }
+    if (!formData.email || !formData.password) { alert('인증 정보를 입력해주세요.'); return; }
     
     setIsSubmitting(true);
     try {
       if (isEditMode && editData) {
-        const updatedChampion: Champion = { ...editData, ...formData };
-        await apiService.updateChampion(updatedChampion);
-        alert('성공적으로 수정되었습니다.');
+        await apiService.updateChampion({ ...editData, ...formData });
+        alert('기록이 수정되었습니다.');
         onSuccess();
       } else {
         const newId = `champ_${Date.now()}`;
-        const newChampion: Champion = {
+        await apiService.createChampion({
           id: newId,
           ...formData,
-          registeredAt: new Date().toLocaleDateString('ko-KR', { year: 'numeric', month: '2-digit', day: '2-digit' }).replace(/\.$/, ''),
+          registeredAt: new Date().toLocaleDateString('ko-KR').replace(/\.$/, ''),
           status: 'APPROVED',
           viewCount: 0
-        };
-        await apiService.createChampion(newChampion);
+        });
         storageService.addOwnership(newId);
-        alert('명예의 전당 등록이 완료되었습니다.');
+        alert('명예의 전당에 성공적으로 등록되었습니다.');
         onSuccess();
       }
     } catch (err) {
-      console.error("Database Submit Failed:", err);
-      alert('데이터베이스 저장에 실패했습니다.');
+      alert('데이터 저장 중 오류가 발생했습니다.');
     } finally { 
       setIsSubmitting(false); 
     }
   };
 
   const isAnyLoading = isSubmitting || isUploading || isTransforming || isOptimizing;
-  const canTransform = formData.imageUrl && !isAnyLoading;
 
   return (
-    <div className="max-w-4xl mx-auto py-12 px-6">
+    <div className="max-w-5xl mx-auto py-12 px-6">
       <div className="text-center mb-16">
         <h2 className="text-4xl md:text-5xl font-black serif-title mb-4 tracking-tighter uppercase">
-          {isEditMode ? '기록' : 'AI챔피언'} <span className="gold-text">{isEditMode ? '업데이트' : '등록하기'}</span>
+          {isEditMode ? '챔피언 기록' : 'AI 챔피언'} <span className="gold-text">{isEditMode ? '업데이트' : '등록'}</span>
         </h2>
-        <p className="text-white/40 font-light italic break-keep px-4 text-xs md:text-sm leading-relaxed">
-          국가 디지털 혁신의 기록은 안전한 클라우드 인프라에 영구 보존됩니다.
-        </p>
+        <p className="text-yellow-500/60 font-black text-[10px] tracking-[0.4em] uppercase">National Digital Excellence Registry</p>
       </div>
 
       <form onSubmit={handleSubmit} className="grid grid-cols-1 lg:grid-cols-12 gap-12">
-        <div className="lg:col-span-5 flex flex-col space-y-6">
-          <div className="relative group aspect-[4/5] bg-neutral-900 border-2 border-dashed border-white/10 rounded-sm overflow-hidden flex items-center justify-center">
+        {/* Left Section: Image and Auth */}
+        <div className="lg:col-span-5 flex flex-col space-y-8">
+          <div className="relative aspect-[3/4] bg-neutral-900 border-2 border-white/10 rounded-sm overflow-hidden flex items-center justify-center group shadow-2xl">
             {isAnyLoading ? (
               <div className="flex flex-col items-center">
-                <div className="w-10 h-10 border-2 border-yellow-500 border-t-transparent rounded-full animate-spin mb-4"></div>
-                <p className="text-[10px] font-black tracking-[0.3em] text-yellow-500 uppercase animate-pulse">
-                  {isUploading ? 'Cloud Syncing...' : isTransforming ? 'AI Rendering...' : 'Processing...'}
-                </p>
+                <div className="w-12 h-12 border-4 border-yellow-500 border-t-transparent rounded-full animate-spin mb-4"></div>
+                <p className="text-[10px] font-black tracking-widest text-yellow-500 uppercase animate-pulse">Processing Registry...</p>
               </div>
             ) : formData.imageUrl || localBase64 ? (
-              <img src={localBase64 || formData.imageUrl} className="w-full h-full object-cover transition-all duration-500" alt="Profile Preview" />
+              <img src={localBase64 || formData.imageUrl} className="w-full h-full object-cover" alt="Profile" />
             ) : (
-              <div className="text-center px-8 group-hover:scale-110 transition-transform duration-500">
-                <div className="w-16 h-16 bg-white/5 rounded-full flex items-center justify-center mx-auto mb-6 group-hover:bg-yellow-500 transition-colors">
-                   <svg className="w-8 h-8 text-white/40 group-hover:text-black transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4"></path></svg>
+              <div className="text-center p-10 opacity-30 group-hover:opacity-100 transition-all duration-500">
+                <div className="w-20 h-20 border-2 border-dashed border-white/40 rounded-full flex items-center justify-center mx-auto mb-6 group-hover:scale-110 group-hover:border-yellow-500 transition-all">
+                  <span className="text-3xl text-white">+</span>
                 </div>
-                <p className="text-[10px] font-bold tracking-[0.4em] text-white/30 uppercase">Photo Upload</p>
+                <p className="text-[10px] font-black uppercase tracking-widest text-white">사진 업로드</p>
+                <p className="text-[8px] text-white/40 mt-2 uppercase tracking-tighter">Click or Drag to Upload</p>
               </div>
             )}
             <input type="file" ref={fileInputRef} onChange={handleImageUpload} className="absolute inset-0 opacity-0 cursor-pointer" accept="image/*" disabled={isAnyLoading} />
@@ -223,74 +213,91 @@ const RegistrationForm: React.FC<RegistrationFormProps> = ({ onSuccess, editData
           <button 
             type="button" 
             onClick={handleArtisticTransform} 
-            disabled={!canTransform}
-            className={`w-full py-5 border font-black text-[10px] tracking-[0.4em] uppercase transition-all group relative overflow-hidden ${canTransform ? 'bg-white/5 border-white/10 text-white hover:bg-yellow-500 hover:text-black hover:border-yellow-500' : 'bg-white/5 border-white/5 text-white/20 cursor-not-allowed'}`}
+            disabled={!formData.imageUrl || isAnyLoading}
+            className={`w-full py-5 border-2 font-black text-[11px] tracking-[0.3em] uppercase transition-all duration-500 ${formData.imageUrl && !isAnyLoading ? 'bg-white/5 border-yellow-500/40 text-yellow-500 hover:bg-yellow-500 hover:text-black shadow-lg shadow-yellow-500/10' : 'opacity-20 cursor-not-allowed border-white/10'}`}
           >
-            <span className="relative z-10">{isTransforming ? 'AI 아티스트 작업 중...' : 'Gemini Pro 예술적 변환'}</span>
-            {!isTransforming && <span className="block text-[8px] opacity-40 lowercase group-hover:opacity-100 relative z-10 mt-1">Transform to Professional Portrait</span>}
-            {isTransforming && <motion.div initial={{ x: '-100%' }} animate={{ x: '100%' }} transition={{ repeat: Infinity, duration: 1, ease: 'linear' }} className="absolute inset-0 bg-yellow-500/20" />}
+            {isTransforming ? 'AI RENDERING...' : 'Gemini Pro 예술적 변환'}
           </button>
 
-          <div className="p-6 bg-white/[0.02] border border-white/5 rounded-sm space-y-4">
-             <div className="flex flex-col space-y-2">
-               <label className="text-[9px] font-bold uppercase tracking-[0.2em] text-white/30">Registry Email</label>
-               <input required type="email" value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} className="w-full bg-black/40 border border-white/10 p-4 text-sm focus:outline-none focus:border-yellow-500 transition-all font-mono" placeholder="your@email.com" />
+          <div className="p-8 bg-white/[0.03] border border-white/10 rounded-sm space-y-6 shadow-xl">
+             <div className="flex flex-col space-y-3">
+               <label className="text-[10px] font-black uppercase tracking-widest text-yellow-500">관리용 이메일 (Email)</label>
+               <input required type="email" value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} className="bg-black/60 border border-white/10 p-4 text-sm text-white focus:border-yellow-500 outline-none transition-all" placeholder="본인 확인용 이메일" />
              </div>
-             <div className="flex flex-col space-y-2">
-               <label className="text-[9px] font-bold uppercase tracking-[0.2em] text-white/30">Security Password</label>
-               <input required type="password" value={formData.password} onChange={e => setFormData({...formData, password: e.target.value})} className="w-full bg-black/40 border border-white/10 p-4 text-sm focus:outline-none focus:border-yellow-500 transition-all font-mono" placeholder="관리용 비밀번호" />
+             <div className="flex flex-col space-y-3">
+               <label className="text-[10px] font-black uppercase tracking-widest text-yellow-500">관리용 비밀번호 (Password)</label>
+               <input required type="password" value={formData.password} onChange={e => setFormData({...formData, password: e.target.value})} className="bg-black/60 border border-white/10 p-4 text-sm text-white focus:border-yellow-500 outline-none transition-all" placeholder="기록 수정/삭제 비밀번호" />
              </div>
+             <p className="text-[9px] text-white/30 italic">등록하신 이메일과 비밀번호는 추후 프로필 수정 시 사용됩니다.</p>
           </div>
         </div>
 
-        <div className="lg:col-span-7 space-y-8 glass p-10 md:p-14 rounded-sm border-white/5">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
-            <div className="flex flex-col space-y-2">
-              <label className="text-[10px] font-black uppercase tracking-[0.3em] text-white/20">성함</label>
-              <input required type="text" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} className="bg-transparent border-b border-white/10 py-3 focus:outline-none focus:border-yellow-500 transition-colors text-xl font-bold" placeholder="성함" />
+        {/* Right Section: Form Fields */}
+        <div className="lg:col-span-7 space-y-8 glass p-8 md:p-14 rounded-sm border-white/10">
+          <div className="grid grid-cols-2 gap-8">
+            <div className="flex flex-col space-y-3">
+              <label className="text-[11px] font-black uppercase tracking-widest text-white/70">성함 (Name)</label>
+              <input required type="text" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} className="bg-transparent border-b-2 border-white/10 py-3 focus:border-yellow-500 outline-none text-xl font-bold text-white transition-all" />
             </div>
-            <div className="flex flex-col space-y-2">
-              <label className="text-[10px] font-black uppercase tracking-[0.3em] text-white/20">소속 부처/기관</label>
-              <input required type="text" value={formData.department} onChange={e => setFormData({...formData, department: e.target.value})} className="bg-transparent border-b border-white/10 py-3 focus:outline-none focus:border-yellow-500 transition-colors text-xl font-bold" placeholder="기관명" />
+            <div className="flex flex-col space-y-3">
+              <label className="text-[11px] font-black uppercase tracking-widest text-white/70">소속 (Department)</label>
+              <input required type="text" value={formData.department} onChange={e => setFormData({...formData, department: e.target.value})} className="bg-transparent border-b-2 border-white/10 py-3 focus:border-yellow-500 outline-none text-xl font-bold text-white transition-all" />
             </div>
           </div>
 
-          <div className="flex flex-col space-y-2">
-            <label className="text-[10px] font-black uppercase tracking-[0.3em] text-white/20">직위 / 전문 분야</label>
-            <input required type="text" value={formData.role} onChange={e => setFormData({...formData, role: e.target.value})} className="bg-transparent border-b border-white/10 py-3 focus:outline-none focus:border-yellow-500 transition-colors text-sm" placeholder="예: 디지털전략과 사무관" />
+          <div className="flex flex-col space-y-3">
+            <label className="text-[11px] font-black uppercase tracking-widest text-white/70">직위 / 역할 (Role)</label>
+            <input required type="text" value={formData.role} onChange={e => setFormData({...formData, role: e.target.value})} className="bg-transparent border-b-2 border-white/10 py-3 focus:border-yellow-500 outline-none text-base text-white/90 transition-all" placeholder="예: 디지털전무 기획관, 데이터 분석가 등" />
           </div>
 
           <div className="flex flex-col space-y-4">
-            <label className="text-[10px] font-black uppercase tracking-[0.3em] text-white/20">Elite Rank Selection</label>
+            <label className="text-[11px] font-black uppercase tracking-widest text-white/70">Certification Rank (인증 등급)</label>
             <div className="grid grid-cols-3 gap-3">
               {[CertificationType.GREEN, CertificationType.BLUE, CertificationType.BLACK].map(type => (
-                <button key={type} type="button" onClick={() => setFormData({...formData, certType: type})} className={`py-4 border text-[10px] font-black tracking-widest transition-all ${formData.certType === type ? 'bg-white text-black border-white shadow-[0_0_20px_rgba(255,255,255,0.1)]' : 'bg-transparent text-white/30 border-white/5 hover:border-white/20'}`}>{type}</button>
+                <button key={type} type="button" onClick={() => setFormData({...formData, certType: type})} className={`py-4 border-2 text-[10px] font-black tracking-widest transition-all ${formData.certType === type ? 'bg-yellow-500 text-black border-yellow-500 shadow-lg' : 'border-white/10 text-white/40 hover:border-white/30'}`}>{type}</button>
               ))}
             </div>
           </div>
 
-          <div className="flex flex-col space-y-4">
+          <div className="flex flex-col space-y-4 pt-4 border-t border-white/5">
             <div className="flex items-center justify-between">
-              <label className="text-[10px] font-black uppercase tracking-[0.3em] text-white/20">Visionary Statement</label>
+              <label className="text-[11px] font-black uppercase tracking-widest text-white/70">Visionary Statement (포부)</label>
               <button type="button" onClick={async () => {
-                if (!formData.vision) return alert('내용을 먼저 작성해주세요.');
+                if (!formData.vision) return alert('내용을 먼저 입력해주세요.');
                 setIsPolishing(true);
                 try {
                   const pol = await polishVision(formData.name, formData.department, formData.vision);
                   setFormData(prev => ({...prev, vision: pol}));
                 } finally { setIsPolishing(false); }
-              }} className="text-[9px] font-black text-yellow-500 uppercase tracking-widest bg-yellow-500/10 px-3 py-1 border border-yellow-500/20 hover:bg-yellow-500 hover:text-black transition-all">{isPolishing ? 'Refining...' : 'Gemini AI 교정'}</button>
+              }} className="text-[9px] font-black text-yellow-500 uppercase px-3 py-1.5 bg-yellow-500/10 border border-yellow-500/30 hover:bg-yellow-500 hover:text-black transition-all">{isPolishing ? 'Refining...' : 'AI 문장 교정'}</button>
             </div>
-            <textarea required rows={4} value={formData.vision} onChange={e => setFormData({...formData, vision: e.target.value})} className="bg-white/[0.03] border border-white/10 p-5 focus:outline-none focus:border-yellow-500/30 transition-colors text-base font-light leading-relaxed italic" placeholder="대한민국 AI의 미래를 향한 포부를 기록하세요." />
+            <textarea required rows={3} value={formData.vision} onChange={e => setFormData({...formData, vision: e.target.value})} className="bg-white/[0.04] border border-white/10 p-5 text-sm font-medium italic text-white focus:border-yellow-500 outline-none leading-relaxed transition-all placeholder:text-white/10" placeholder="AI를 통해 실현하고자 하는 가치를 입력하세요." />
           </div>
 
-          <button 
-            type="submit" 
-            disabled={isAnyLoading} 
-            className={`w-full py-6 font-black uppercase tracking-[0.5em] text-[11px] md:text-sm transition-all shadow-2xl ${isAnyLoading ? 'bg-white/5 text-white/10 cursor-not-allowed' : 'bg-yellow-500 text-black hover:bg-yellow-400 hover:scale-[1.01] active:scale-95 shadow-yellow-500/10'}`}
-          >
-            {isSubmitting ? 'Securing Eternal Archive...' : isEditMode ? 'Cloud Data Synchronize' : 'Enroll in Hall of Fame'}
-          </button>
+          <div className="flex flex-col space-y-4">
+            <div className="flex items-center justify-between">
+              <label className="text-[11px] font-black uppercase tracking-widest text-white/70">Impact Assessment (주요 업적)</label>
+              <button type="button" onClick={async () => {
+                if (!formData.name || !formData.department) return alert('성함과 소속을 먼저 입력해주세요.');
+                setIsSuggesting(true);
+                try {
+                  const sugg = await suggestAchievement(formData.name, formData.department, formData.role);
+                  setFormData(prev => ({...prev, achievement: sugg}));
+                } finally { setIsSuggesting(false); }
+              }} className="text-[9px] font-black text-yellow-500 uppercase px-3 py-1.5 bg-yellow-500/10 border border-yellow-500/30 hover:bg-yellow-500 hover:text-black transition-all">{isSuggesting ? 'Thinking...' : 'AI 업적 추천'}</button>
+            </div>
+            <textarea required rows={3} value={formData.achievement} onChange={e => setFormData({...formData, achievement: e.target.value})} className="bg-white/[0.04] border border-white/10 p-5 text-sm font-medium text-white focus:border-yellow-500 outline-none leading-relaxed transition-all placeholder:text-white/10" placeholder="주요 AI 혁신 사례 및 성과를 기록하세요." />
+          </div>
+
+          <div className="pt-8">
+            <button 
+              type="submit" 
+              disabled={isAnyLoading} 
+              className={`w-full py-6 font-black uppercase tracking-[0.4em] text-[12px] transition-all duration-500 rounded-sm ${isAnyLoading ? 'opacity-20 cursor-not-allowed bg-white/10' : 'bg-yellow-500 text-black hover:bg-yellow-400 shadow-2xl shadow-yellow-500/20 active:scale-[0.98]'}`}
+            >
+              {isSubmitting ? 'SYCHRONIZING...' : '명예의 전당 등록하기'}
+            </button>
+          </div>
         </div>
       </form>
     </div>

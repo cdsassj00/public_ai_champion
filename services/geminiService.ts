@@ -2,8 +2,6 @@
 import { GoogleGenAI } from "@google/genai";
 
 // Window 인터페이스 확장을 통해 aistudio 타입 정의
-// Fix: Use the global AIStudio interface and match the property signature on Window to avoid type conflicts.
-// All declarations of 'aistudio' must have identical modifiers and consistent types.
 declare global {
   interface AIStudio {
     hasSelectedApiKey: () => Promise<boolean>;
@@ -15,18 +13,12 @@ declare global {
   }
 }
 
-/**
- * Gemini 3 Pro Image (Nano Banana Pro) 등 고성능 모델 사용 시 
- * 브라우저 환경에서 API 키 선택 여부를 확인하고 인스턴스를 생성합니다.
- */
 async function getAiInstance() {
-  // window.aistudio 환경(특수 실행 환경)인 경우 키 선택 여부 확인
   if (typeof window !== 'undefined' && window.aistudio) {
     try {
       const hasKey = await window.aistudio.hasSelectedApiKey();
       if (!hasKey) {
         await window.aistudio.openSelectKey();
-        // openSelectKey 호출 후에는 즉시 성공한 것으로 간주하고 진행 (레이스 컨디션 방지)
       }
     } catch (e) {
       console.warn("aistudio check failed, proceeding with env key.");
@@ -35,7 +27,7 @@ async function getAiInstance() {
   
   const apiKey = process.env.API_KEY;
   if (!apiKey) {
-    throw new Error("API_KEY가 설정되지 않았습니다. 환경 변수를 확인해주세요.");
+    throw new Error("API_KEY가 설정되지 않았습니다.");
   }
   
   return new GoogleGenAI({ apiKey });
@@ -46,26 +38,24 @@ export async function polishVision(name: string, dept: string, vision: string) {
     const ai = await getAiInstance();
     const response = await ai.models.generateContent({
       model: 'gemini-3-flash-preview',
-      contents: `사용자의 이름은 ${name}이고 소속은 ${dept}입니다. 이 사용자가 작성한 AI 챔피언으로서의 포부는 다음과 같습니다: "${vision}". 이 포부를 더 전문적이고 영감을 주는 문장으로 다듬어주세요. 결과는 한 문장으로만 출력하세요.`,
-      config: { 
-        thinkingConfig: { thinkingBudget: 0 }
-      }
+      contents: `사용자의 이름은 ${name}이고 소속은 ${dept}입니다. 이 사용자가 작성한 포부는 다음과 같습니다: "${vision}". 이 포부를 더 전문적이고 품격 있는 문장으로 다듬어주세요. 결과는 반드시 한 문장의 평서문으로만 출력하세요.`,
+      config: { thinkingConfig: { thinkingBudget: 0 } }
     });
-    return response.text || vision;
+    return response.text?.trim() || vision;
   } catch (error) {
-    console.error("Polish Vision Error:", error);
     return vision;
   }
 }
 
-export async function suggestProfileContent(name: string, dept: string, role: string) {
+export async function suggestAchievement(name: string, dept: string, role: string) {
   try {
     const ai = await getAiInstance();
     const response = await ai.models.generateContent({
       model: 'gemini-3-flash-preview',
-      contents: `${dept}의 ${role}인 ${name} 챔피언이 명예의 전당에 등록하려 합니다. 이 사람이 자랑할 만한 '공공 AI 혁신 업적'을 한 문장으로 제안해주세요.`,
+      contents: `${dept}에서 ${role}로 활동하는 ${name} 챔피언이 수행했을 법한 공공 AI 혁신 업적을 한 문장으로 전문성 있게 제안해주세요.`,
+      config: { thinkingConfig: { thinkingBudget: 0 } }
     });
-    return response.text?.replace(/"/g, '') || "";
+    return response.text?.replace(/"/g, '').trim() || "";
   } catch (error) {
     return "";
   }
@@ -81,13 +71,14 @@ export async function transformPortrait(base64Image: string, mimeType: string) {
         parts: [
           { inlineData: { data: base64Image, mimeType: mimeType } },
           {
-            text: `당신은 세계 최고의 인물 사진작가입니다. 첨부된 사진의 인물을 '대한민국 공공부문 AI 챔피언'에 걸맞는 품격 있는 프로필 사진으로 변환해주세요.
+            text: `[TASK: Masterpiece Portrait Transformation]
+            원본 사진 속 인물의 고유한 얼굴 특징, 이목구비, 인상을 100% 완벽하게 보존하면서, 배경과 조명만 대한민국 공공부문 최고 리더에 걸맞는 '프리미엄 프로필' 스타일로 업그레이드하세요.
             
-            [필수 가이드라인]
-            1. 구도: 상반신(Waist Up)이 보이도록 멀리서 잡아주세요. 얼굴만 너무 크게 나오지 않게(No extreme close-up).
-            2. 인물 유지: 인물의 고유한 이목구비와 정체성을 100% 유지하세요.
-            3. 스타일: 전문적인 스튜디오 조명, 중후한 질감의 배경, 하이엔드 DSLR 품질.
-            4. 결과물: 이미지만 생성하세요.`,
+            [CRITICAL INSTRUCTIONS]
+            1. 얼굴 보존 (STRICT FACE PRESERVATION): 사진 속 인물이 누구인지 명확히 알 수 있어야 합니다. 얼굴을 다른 사람으로 바꾸거나 과도하게 보정하지 마세요. 원본의 눈, 코, 입 생김새를 그대로 유지하십시오.
+            2. 텍스트 금지 (NO TEXT/SYMBOLS): 이미지 그 어디에도 글자, 문자, 숫자, 서명, 로고를 넣지 마십시오. 오직 인물과 배경만이 존재해야 합니다.
+            3. 무드와 톤 (MOOD & TONE): 지적인 깊이가 느껴지는 다크한 스튜디오 배경, 상단에서 부드럽게 떨어지는 렘브란트 조명, 시네마틱한 텍스처를 적용하세요.
+            4. 품질: 8k UHD, Professional DSLR quality, Clean and sophisticated.`,
           },
         ],
       },
@@ -106,9 +97,8 @@ export async function transformPortrait(base64Image: string, mimeType: string) {
         }
       }
     }
-    throw new Error("이미지 생성 결과가 없습니다.");
+    throw new Error("이미지 생성 실패");
   } catch (error: any) {
-    // 키 관련 에러 발생 시 재선택 유도
     if (error?.message?.includes("Requested entity was not found") && typeof window !== 'undefined' && window.aistudio) {
       await window.aistudio.openSelectKey();
     }
