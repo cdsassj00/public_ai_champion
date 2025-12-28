@@ -94,7 +94,7 @@ const RegistrationForm: React.FC<RegistrationFormProps> = ({ onSuccess, editData
         const publicUrl = await apiService.uploadImage(optimizedBase64, `raw_${formData.name || 'user'}`);
         setFormData(prev => ({ ...prev, imageUrl: publicUrl }));
       } catch (error) {
-        alert('업로드 오류 발생');
+        alert('이미지 업로드에 실패했습니다. 네트워크를 확인하세요.');
       } finally {
         setIsUploading(false);
         setIsOptimizing(false);
@@ -118,7 +118,7 @@ const RegistrationForm: React.FC<RegistrationFormProps> = ({ onSuccess, editData
           r.readAsDataURL(blob);
         });
       } catch (e) {
-        console.error("Fetch failed");
+        console.error("Image fetch failed");
       }
     }
 
@@ -137,8 +137,9 @@ const RegistrationForm: React.FC<RegistrationFormProps> = ({ onSuccess, editData
       setIsUploading(true);
       const storageUrl = await apiService.uploadImage(aiResultBase64, `ai_portrait_${formData.name || 'champion'}`);
       setFormData(prev => ({ ...prev, imageUrl: storageUrl }));
-    } catch (error) {
-      alert('AI 변환 중 오류가 발생했습니다.');
+    } catch (error: any) {
+      console.error(error);
+      alert(error.message || 'AI 변환 중 오류가 발생했습니다. API 키 설정을 확인하세요.');
     } finally { 
       setIsTransforming(false); 
       setIsUploading(false);
@@ -170,7 +171,7 @@ const RegistrationForm: React.FC<RegistrationFormProps> = ({ onSuccess, editData
         onSuccess();
       }
     } catch (err) {
-      alert('데이터 저장 중 오류가 발생했습니다.');
+      alert('데이터 저장 중 오류가 발생했습니다. 잠시 후 다시 시도하세요.');
     } finally { 
       setIsSubmitting(false); 
     }
@@ -194,7 +195,7 @@ const RegistrationForm: React.FC<RegistrationFormProps> = ({ onSuccess, editData
             {isAnyLoading ? (
               <div className="flex flex-col items-center">
                 <div className="w-12 h-12 border-4 border-yellow-500 border-t-transparent rounded-full animate-spin mb-4"></div>
-                <p className="text-[10px] font-black tracking-widest text-yellow-500 uppercase animate-pulse">Processing Registry...</p>
+                <p className="text-[10px] font-black tracking-widest text-yellow-500 uppercase animate-pulse">AI 엔진 가동 중...</p>
               </div>
             ) : formData.imageUrl || localBase64 ? (
               <img src={localBase64 || formData.imageUrl} className="w-full h-full object-cover" alt="Profile" />
@@ -228,7 +229,6 @@ const RegistrationForm: React.FC<RegistrationFormProps> = ({ onSuccess, editData
                <label className="text-[10px] font-black uppercase tracking-widest text-yellow-500">관리용 비밀번호 (Password)</label>
                <input required type="password" value={formData.password} onChange={e => setFormData({...formData, password: e.target.value})} className="bg-black/60 border border-white/10 p-4 text-sm text-white focus:border-yellow-500 outline-none transition-all" placeholder="기록 수정/삭제 비밀번호" />
              </div>
-             <p className="text-[9px] text-white/30 italic">등록하신 이메일과 비밀번호는 추후 프로필 수정 시 사용됩니다.</p>
           </div>
         </div>
 
@@ -263,7 +263,7 @@ const RegistrationForm: React.FC<RegistrationFormProps> = ({ onSuccess, editData
             <div className="flex items-center justify-between">
               <label className="text-[11px] font-black uppercase tracking-widest text-white/70">Visionary Statement (포부)</label>
               <button type="button" onClick={async () => {
-                if (!formData.vision) return alert('내용을 먼저 입력해주세요.');
+                if (!formData.vision) return alert('포부를 입력해주세요.');
                 setIsPolishing(true);
                 try {
                   const pol = await polishVision(formData.name, formData.department, formData.vision);

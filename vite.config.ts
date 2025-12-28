@@ -5,10 +5,13 @@ import react from '@vitejs/plugin-react';
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '');
   
+  // API_KEY를 찾기 위한 우선순위: Vercel Env > Vite Env > Fallback
+  const resolvedApiKey = env.API_KEY || env.VITE_API_KEY || env.VITE_GEMINI_API_KEY || "";
+  
   return {
     plugins: [react()],
     define: {
-      'process.env.API_KEY': JSON.stringify(env.API_KEY || env.VITE_GEMINI_API_KEY || ""),
+      'process.env.API_KEY': JSON.stringify(resolvedApiKey),
       'process.env.VITE_SUPABASE_URL': JSON.stringify(env.VITE_SUPABASE_URL || ""),
       'process.env.VITE_SUPABASE_ANON_KEY': JSON.stringify(env.VITE_SUPABASE_ANON_KEY || ""),
     },
