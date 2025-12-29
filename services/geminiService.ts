@@ -53,11 +53,14 @@ export async function transformPortrait(base64Image: string, mimeType: string) {
         parts: [
           { inlineData: { data: base64Image, mimeType: mimeType } },
           {
-            text: `[TASK: Professional Portrait Improvement]
-            Keep the person's face EXACTLY the same. Only change the background and lighting.
-            Background: Intellectual dark office/studio with soft warm lighting.
-            Quality: Professional DSLR, 8k, cinematic, high contrast.
-            STRICT: NO TEXT, NO LOGOS, NO WRITING on the image.`,
+            text: `[TASK: Professional Portrait Composition Improvement]
+            
+            1. SUBJECT: Keep the person's face EXACTLY the same, but adjust the framing.
+            2. COMPOSITION: Half-body shot (Medium shot). Include shoulders, chest, and arms. 
+            3. SPACING: Ensure significant headroom above the person. DO NOT zoom in on the face. The face should take up only about 20-30% of the vertical space.
+            4. BACKGROUND: Intellectual dark office/studio with soft warm cinematic lighting.
+            5. QUALITY: Professional DSLR photography, 8k, sharp focus on subject, natural bokeh background.
+            6. STRICT: NO TEXT, NO LOGOS, NO WRITING on the image.`,
           },
         ],
       },
