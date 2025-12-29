@@ -1,13 +1,14 @@
 
 import { defineConfig, loadEnv } from 'vite';
 import react from '@vitejs/plugin-react';
-import process from 'node:process';
+import { cwd, env as processEnv } from 'node:process';
 
 export default defineConfig(({ mode }) => {
-  // Fix: use process.cwd() with explicit node:process import to satisfy TypeScript
-  const env = loadEnv(mode, process.cwd(), '');
+  // Fix: use cwd() from node:process to avoid TypeScript error on process.cwd()
+  const env = loadEnv(mode, cwd(), '');
   
-  const resolvedApiKey = env.API_KEY || env.VITE_API_KEY || "";
+  // Ensure the API_KEY is correctly pulled from process.env as per Gemini API requirements
+  const resolvedApiKey = processEnv.API_KEY || env.API_KEY || env.VITE_API_KEY || "";
   
   return {
     plugins: [react()],
