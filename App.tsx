@@ -79,7 +79,7 @@ const App: React.FC = () => {
 
   const placeholdersNeeded = useMemo(() => {
     if (searchQuery.trim()) return 0;
-    const minSlots = 18; 
+    const minSlots = 15; 
     return Math.max(0, minSlots - filteredChampions.length);
   }, [filteredChampions, searchQuery]);
 
@@ -115,7 +115,7 @@ const App: React.FC = () => {
                   <span className="text-[8px] font-bold tracking-widest uppercase">기록 동기화 중...</span>
                 </div>
               ) : (
-                <motion.div layout className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 md:gap-6 lg:gap-8">
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-4 md:gap-6 lg:gap-8">
                   <AnimatePresence mode="popLayout">
                     {filteredChampions.map((champion, index) => (
                       <ChampionCard key={champion.id} champion={champion} index={index} onClick={handleSelectChampion} />
@@ -124,7 +124,7 @@ const App: React.FC = () => {
                       <PlaceholderCard key={`placeholder-${idx}`} index={idx} onClick={() => setView('REGISTER')} />
                     ))}
                   </AnimatePresence>
-                </motion.div>
+                </div>
               )}
             </div>
           )}
