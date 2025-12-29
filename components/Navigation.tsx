@@ -1,4 +1,6 @@
 
+// Fix: Added missing React import to resolve 'Cannot find namespace React' error
+import React from 'react';
 import { ViewState } from '../types';
 
 interface NavigationProps {

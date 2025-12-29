@@ -18,6 +18,7 @@ const ChampionModal: React.FC<ChampionModalProps> = ({ champion, onClose, onEdit
   const [authEmail, setAuthEmail] = useState('');
   const [authPassword, setAuthPassword] = useState('');
   const [showAuthPrompt, setShowAuthPrompt] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false); // 커스텀 삭제 확인 UI 상태
   const [authAction, setAuthAction] = useState<'EDIT' | 'DELETE' | null>(null);
 
   if (!champion) return null;
@@ -25,13 +26,12 @@ const ChampionModal: React.FC<ChampionModalProps> = ({ champion, onClose, onEdit
   const details = CERT_DETAILS[champion.certType];
   const isOwner = storageService.isOwner(champion.id);
   
-  // 이미지는 이제 Supabase Storage의 Public URL 또는 샘플 이미지
   const displayImage = champion.imageUrl;
 
   const handleManagementAction = (action: 'EDIT' | 'DELETE') => {
     if (isOwner) {
       if (action === 'EDIT') onEdit(champion);
-      else confirmDelete();
+      else setShowDeleteConfirm(true); // 브라우저 confirm 대신 상태 변경
     } else {
       setAuthAction(action);
       setShowAuthPrompt(true);
@@ -41,10 +41,15 @@ const ChampionModal: React.FC<ChampionModalProps> = ({ champion, onClose, onEdit
   const verifyCredentials = () => {
     if (authEmail.toLowerCase().trim() === champion.email.toLowerCase().trim() && authPassword === champion.password) {
       storageService.addOwnership(champion.id);
-      if (authAction === 'EDIT') onEdit(champion);
-      else confirmDelete();
-      setShowAuthPrompt(false);
-      resetAuthFields();
+      if (authAction === 'EDIT') {
+        onEdit(champion);
+        setShowAuthPrompt(false);
+        resetAuthFields();
+      } else {
+        setShowAuthPrompt(false);
+        resetAuthFields();
+        setShowDeleteConfirm(true); // 인증 성공 후 삭제 확인 UI 표시
+      }
     } else {
       alert('인증 정보가 올바르지 않습니다.');
     }
@@ -55,19 +60,18 @@ const ChampionModal: React.FC<ChampionModalProps> = ({ champion, onClose, onEdit
     setAuthPassword('');
   };
 
-  const confirmDelete = async () => {
-    if (window.confirm('이 고귀한 기록을 명예의 전당에서 영구적으로 삭제하시겠습니까?')) {
-      setIsDeleting(true);
-      try {
-        await apiService.deleteChampion(champion.id);
-        alert('성공적으로 삭제되었습니다.');
-        onDelete?.(champion.id);
-        onClose();
-      } catch (e) {
-        alert('삭제 중 오류가 발생했습니다.');
-      } finally {
-        setIsDeleting(false);
-      }
+  const executeDelete = async () => {
+    setIsDeleting(true);
+    try {
+      await apiService.deleteChampion(champion.id);
+      alert('성공적으로 삭제되었습니다.');
+      onDelete?.(champion.id);
+      onClose();
+    } catch (e) {
+      alert('삭제 중 오류가 발생했습니다.');
+    } finally {
+      setIsDeleting(false);
+      setShowDeleteConfirm(false);
     }
   };
 
@@ -83,6 +87,7 @@ const ChampionModal: React.FC<ChampionModalProps> = ({ champion, onClose, onEdit
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path></svg>
           </button>
 
+          {/* 커스텀 인증 UI */}
           <AnimatePresence>
             {showAuthPrompt && (
               <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 z-[60] bg-black/95 backdrop-blur-3xl flex items-center justify-center p-6 text-center">
@@ -120,6 +125,38 @@ const ChampionModal: React.FC<ChampionModalProps> = ({ champion, onClose, onEdit
                   <div className="flex gap-4 pt-4">
                     <button onClick={() => { setShowAuthPrompt(false); resetAuthFields(); }} className="flex-1 py-3 border border-white/10 text-[10px] font-bold uppercase tracking-widest opacity-50 hover:opacity-100 transition-opacity">Cancel</button>
                     <button onClick={verifyCredentials} className="flex-1 py-3 bg-yellow-500 text-black text-[10px] font-black uppercase tracking-widest shadow-xl hover:bg-yellow-400 transition-colors">Confirm Identity</button>
+                  </div>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {/* 커스텀 삭제 확인 UI (Embed 환경 해결책) */}
+          <AnimatePresence>
+            {showDeleteConfirm && (
+              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 z-[70] bg-red-950/90 backdrop-blur-3xl flex items-center justify-center p-6 text-center">
+                <div className="max-w-md w-full space-y-8">
+                  <div className="w-20 h-20 bg-red-500/20 rounded-full flex items-center justify-center mx-auto mb-4 border border-red-500/50">
+                    <svg className="w-10 h-10 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                  </div>
+                  <div>
+                    <h3 className="text-2xl font-black serif-title mb-3">기록 삭제 확인</h3>
+                    <p className="text-sm text-white/70 font-light break-keep">이 고귀한 챔피언의 기록을 명예의 전당에서 영구히 삭제하시겠습니까? 삭제된 데이터는 복구할 수 없습니다.</p>
+                  </div>
+                  <div className="flex flex-col sm:flex-row gap-4">
+                    <button 
+                      onClick={() => setShowDeleteConfirm(false)} 
+                      className="flex-1 py-4 border border-white/10 text-[10px] font-black uppercase tracking-[0.3em] hover:bg-white/10 transition-all"
+                    >
+                      취소
+                    </button>
+                    <button 
+                      onClick={executeDelete} 
+                      disabled={isDeleting}
+                      className={`flex-1 py-4 bg-red-600 text-white text-[10px] font-black uppercase tracking-[0.3em] shadow-2xl hover:bg-red-500 transition-all ${isDeleting ? 'opacity-50 cursor-not-allowed' : ''}`}
+                    >
+                      {isDeleting ? '삭제 처리 중...' : '영구 삭제 승인'}
+                    </button>
                   </div>
                 </div>
               </motion.div>
