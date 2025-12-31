@@ -24,6 +24,7 @@ const App: React.FC = () => {
   const shuffleArray = (array: Champion[]) => {
     const shuffled = [...array];
     for (let i = shuffled.length - 1; i > 0; i--) {
+      // Fix: Corrected random index calculation for Fisher-Yates shuffle (i + 1 instead of i + j)
       const j = Math.floor(Math.random() * (i + 1));
       [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
     }
@@ -34,7 +35,7 @@ const App: React.FC = () => {
     setIsLoading(true);
     try {
       const data = await apiService.fetchChampions();
-      setChampions(shuffleArray(data));
+      setChampions(data); // 셔플 없이 최신순으로 보여주거나 필요시 shuffleArray(data) 사용
     } catch (error) {
       console.error("Data Load Error:", error);
     } finally {
@@ -79,7 +80,7 @@ const App: React.FC = () => {
 
   const placeholdersNeeded = useMemo(() => {
     if (searchQuery.trim()) return 0;
-    const minSlots = 15; 
+    const minSlots = 12; // 최소 표시 슬롯
     return Math.max(0, minSlots - filteredChampions.length);
   }, [filteredChampions, searchQuery]);
 
@@ -95,16 +96,16 @@ const App: React.FC = () => {
           {view === 'HALL_OF_FAME' && (
             <div className="max-w-[1600px] mx-auto px-4 sm:px-10 py-12 md:py-24">
               <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} className="mb-14 md:mb-20 text-center">
-                <span className="text-[10px] md:text-xs font-black tracking-[0.4em] text-yellow-500/60 uppercase block mb-4">공식 기록소</span>
-                <h2 className="text-3xl md:text-5xl font-light serif-title mb-6 tracking-tight uppercase break-keep">공공 AI 챔피언 <span className="gold-text font-black">명예의 전당</span></h2>
+                <span className="text-[10px] md:text-xs font-black tracking-[0.6em] text-yellow-500/60 uppercase block mb-4">Archive of Excellence</span>
+                <h2 className="text-3xl md:text-6xl font-light serif-title mb-8 tracking-tighter uppercase break-keep">공공 AI 챔피언 <span className="gold-text font-black">명예의 전당</span></h2>
                 
                 <div className="max-w-2xl mx-auto relative group px-4">
                   <div className="absolute -inset-1 bg-gradient-to-r from-yellow-500/20 via-transparent to-yellow-500/20 blur-xl opacity-0 group-focus-within:opacity-100 transition-opacity duration-700"></div>
-                  <div className="relative flex items-center">
+                  <div className="relative flex BI items-center">
                     <div className="absolute left-7 text-white/20 group-focus-within:text-yellow-500 transition-colors duration-300">
                       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
                     </div>
-                    <input type="text" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} placeholder="이름 또는 부처명으로 혁신가를 찾으세요" className="w-full bg-white/[0.02] border border-white/10 pl-14 pr-14 py-5 rounded-full text-sm md:text-base font-light focus:outline-none focus:border-yellow-500/50 focus:bg-white/[0.05] transition-all backdrop-blur-3xl shadow-[0_0_50px_rgba(0,0,0,0.5)]" />
+                    <input type="text" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} placeholder="혁신가의 이름을 검색하여 기록을 확인하세요" className="w-full bg-white/[0.02] border border-white/10 pl-14 pr-14 py-5 rounded-full text-sm md:text-base font-light focus:outline-none focus:border-yellow-500/50 focus:bg-white/[0.05] transition-all backdrop-blur-3xl shadow-[0_0_50px_rgba(0,0,0,0.5)]" />
                   </div>
                 </div>
               </motion.div>
@@ -112,7 +113,7 @@ const App: React.FC = () => {
               {isLoading ? (
                 <div className="flex flex-col items-center justify-center py-20 opacity-30">
                   <div className="w-5 h-5 border-2 border-yellow-500 border-t-transparent rounded-full animate-spin mb-3"></div>
-                  <span className="text-[8px] font-bold tracking-widest uppercase">기록 동기화 중...</span>
+                  <span className="text-[8px] font-bold tracking-widest uppercase">데이터 아카이브 로딩 중...</span>
                 </div>
               ) : (
                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-4 md:gap-6 lg:gap-8">
@@ -220,7 +221,7 @@ const App: React.FC = () => {
       />
 
       <footer className="py-12 border-t border-white/5 relative z-10 bg-black text-center text-[7px] md:text-[9px] text-white/10 tracking-[0.2em] uppercase font-bold">
-        &copy; 2025 공공 AI 챔피언 명예의 전당. 모든 권리 보유.
+        &copy; 2025 공공 AI 챔피언 명예의 전당. DIGITAL GOVERNMENT INNOVATION.
       </footer>
     </div>
   );

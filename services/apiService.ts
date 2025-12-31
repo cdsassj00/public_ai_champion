@@ -18,7 +18,10 @@ export const apiService = {
         .order('registered_at', { ascending: false });
 
       if (error) throw error;
-      if (!data || data.length === 0) return SAMPLE_CHAMPIONS;
+      
+      // 목업 데이터가 아닌 실제 DB가 비어있다면 빈 배열을 반환하여 
+      // 사용자가 직접 등록한 데이터만 보이도록 함 (Placeholder 카드가 활성화됨)
+      if (!data || data.length === 0) return [];
 
       return data.map((row: any) => ({
         id: row.id,
@@ -37,8 +40,8 @@ export const apiService = {
         password: row.password || ''
       }));
     } catch (err) {
-      console.warn("Supabase fetch failed, using samples:", err);
-      return SAMPLE_CHAMPIONS;
+      console.warn("Supabase fetch failed, returning empty list:", err);
+      return [];
     }
   },
 
