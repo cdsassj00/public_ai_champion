@@ -13,6 +13,8 @@ import RegistrationForm from './components/RegistrationForm';
 import Background3D from './components/Background3D';
 import ChampionModal from './components/ChampionModal';
 
+type GridItem = { type: 'CHAMPION'; data: Champion } | { type: 'PLACEHOLDER'; id: string };
+
 const App: React.FC = () => {
   const [view, setView] = useState<ViewState>('HOME');
   const [champions, setChampions] = useState<Champion[]>([]);
@@ -21,21 +23,11 @@ const App: React.FC = () => {
   const [selectedChampion, setSelectedChampion] = useState<Champion | null>(null);
   const [editingChampion, setEditingChampion] = useState<Champion | null>(null);
 
-  const shuffleArray = (array: Champion[]) => {
-    const shuffled = [...array];
-    for (let i = shuffled.length - 1; i > 0; i--) {
-      // Fix: Corrected random index calculation for Fisher-Yates shuffle (i + 1 instead of i + j)
-      const j = Math.floor(Math.random() * (i + 1));
-      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
-    }
-    return shuffled;
-  };
-
   const loadData = async () => {
     setIsLoading(true);
     try {
       const data = await apiService.fetchChampions();
-      setChampions(data); // 셔플 없이 최신순으로 보여주거나 필요시 shuffleArray(data) 사용
+      setChampions(data);
     } catch (error) {
       console.error("Data Load Error:", error);
     } finally {
@@ -48,6 +40,42 @@ const App: React.FC = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
     if (view !== 'HALL_OF_FAME') setSearchQuery('');
   }, [view]);
+
+  // 그리드에 표시될 전체 아이템 리스트 (랜덤 배치 포함)
+  const gridItems = useMemo(() => {
+    const query = searchQuery.toLowerCase().trim();
+    
+    // 검색어가 있는 경우: 검색 결과만 표시 (랜덤 섞지 않음)
+    if (query) {
+      return champions
+        .filter(c => 
+          c.name.toLowerCase().includes(query) || 
+          c.department.toLowerCase().includes(query) ||
+          c.role.toLowerCase().includes(query)
+        )
+        .map(c => ({ type: 'CHAMPION', data: c } as GridItem));
+    }
+
+    // 검색어가 없는 경우: 실제 데이터 + 플레이스홀더 섞어서 표시
+    // 최소 42개(6열 기준 가득 찬 느낌)를 유지하며, 데이터가 많아지면 슬롯을 자동으로 더 늘림
+    const baseSlots = 42; 
+    const extraSlots = 12; // 실제 챔피언들 외에 항상 보여줄 여유 공간
+    const totalSlots = Math.max(baseSlots, champions.length + extraSlots); 
+    
+    const items: GridItem[] = [
+      ...champions.map(c => ({ type: 'CHAMPION', data: c } as GridItem)),
+      ...Array.from({ length: totalSlots - champions.length }).map((_, i) => ({ type: 'PLACEHOLDER', id: `ph-${i}` } as GridItem))
+    ];
+
+    // Fisher-Yates Shuffle 적용 (데이터와 빈 자리를 무작위로 섞음)
+    const shuffledItems = [...items];
+    for (let i = shuffledItems.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [shuffledItems[i], shuffledItems[j]] = [shuffledItems[j], shuffledItems[i]];
+    }
+
+    return shuffledItems;
+  }, [champions, searchQuery]);
 
   const handleSelectChampion = async (champion: Champion) => {
     await apiService.incrementView(champion.id);
@@ -68,22 +96,6 @@ const App: React.FC = () => {
     setSelectedChampion(null);
   };
 
-  const filteredChampions = useMemo(() => {
-    const query = searchQuery.toLowerCase().trim();
-    if (!query) return champions;
-    return champions.filter(c => 
-      c.name.toLowerCase().includes(query) || 
-      c.department.toLowerCase().includes(query) ||
-      c.role.toLowerCase().includes(query)
-    );
-  }, [champions, searchQuery]);
-
-  const placeholdersNeeded = useMemo(() => {
-    if (searchQuery.trim()) return 0;
-    const minSlots = 12; // 최소 표시 슬롯
-    return Math.max(0, minSlots - filteredChampions.length);
-  }, [filteredChampions, searchQuery]);
-
   return (
     <div className="relative min-h-screen bg-black text-white selection:bg-yellow-500 selection:text-black overflow-x-hidden">
       <Background3D />
@@ -101,7 +113,7 @@ const App: React.FC = () => {
                 
                 <div className="max-w-2xl mx-auto relative group px-4">
                   <div className="absolute -inset-1 bg-gradient-to-r from-yellow-500/20 via-transparent to-yellow-500/20 blur-xl opacity-0 group-focus-within:opacity-100 transition-opacity duration-700"></div>
-                  <div className="relative flex BI items-center">
+                  <div className="relative flex items-center">
                     <div className="absolute left-7 text-white/20 group-focus-within:text-yellow-500 transition-colors duration-300">
                       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
                     </div>
@@ -118,11 +130,12 @@ const App: React.FC = () => {
               ) : (
                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-4 md:gap-6 lg:gap-8">
                   <AnimatePresence mode="popLayout">
-                    {filteredChampions.map((champion, index) => (
-                      <ChampionCard key={champion.id} champion={champion} index={index} onClick={handleSelectChampion} />
-                    ))}
-                    {Array.from({ length: placeholdersNeeded }).map((_, idx) => (
-                      <PlaceholderCard key={`placeholder-${idx}`} index={idx} onClick={() => setView('REGISTER')} />
+                    {gridItems.map((item, index) => (
+                      item.type === 'CHAMPION' ? (
+                        <ChampionCard key={item.data.id} champion={item.data} index={index} onClick={handleSelectChampion} />
+                      ) : (
+                        <PlaceholderCard key={item.id} index={index} onClick={() => setView('REGISTER')} />
+                      )
                     ))}
                   </AnimatePresence>
                 </div>

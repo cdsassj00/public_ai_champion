@@ -1,7 +1,6 @@
 
 import { createClient } from '@supabase/supabase-js';
 import { Champion, CertificationType } from '../types';
-import { SAMPLE_CHAMPIONS } from '../constants';
 
 // Vercel 환경 변수가 있으면 그것을 사용하고, 없으면 기본값을 사용합니다.
 const SUPABASE_URL = process.env.VITE_SUPABASE_URL || 'https://bvyasjtxydfdzwlaftve.supabase.co';
@@ -19,8 +18,7 @@ export const apiService = {
 
       if (error) throw error;
       
-      // 목업 데이터가 아닌 실제 DB가 비어있다면 빈 배열을 반환하여 
-      // 사용자가 직접 등록한 데이터만 보이도록 함 (Placeholder 카드가 활성화됨)
+      // DB에 데이터가 없거나 에러가 나면 무조건 빈 배열을 반환합니다. (김혁신 등 목업 데이터 절대 노출 금지)
       if (!data || data.length === 0) return [];
 
       return data.map((row: any) => ({
@@ -41,7 +39,7 @@ export const apiService = {
       }));
     } catch (err) {
       console.warn("Supabase fetch failed, returning empty list:", err);
-      return [];
+      return []; // 어떤 상황에서도 빈 배열을 반환하여 Placeholder를 노출시킵니다.
     }
   },
 
