@@ -28,6 +28,7 @@ const RegistrationForm: React.FC<RegistrationFormProps> = ({ onSuccess, editData
 
   const [localBase64, setLocalBase64] = useState<string | null>(null);
   const [isAiApplied, setIsAiApplied] = useState(false);
+  const [imageLoadError, setImageLoadError] = useState(false);
 
   useEffect(() => {
     if (editData) {
@@ -43,8 +44,7 @@ const RegistrationForm: React.FC<RegistrationFormProps> = ({ onSuccess, editData
         email: editData.email || '',
         password: editData.password || ''
       });
-      // 이미지 URL에 AI 키워드가 없으면 변환되지 않은 것으로 간주
-      const alreadyHasAiImage = editData.imageUrl.includes('ai_') || editData.imageUrl.includes('auto_ai');
+      const alreadyHasAiImage = editData.imageUrl.includes('profile_') || editData.imageUrl.includes('auto_profile');
       setIsAiApplied(alreadyHasAiImage);
     }
   }, [editData]);
@@ -56,6 +56,25 @@ const RegistrationForm: React.FC<RegistrationFormProps> = ({ onSuccess, editData
   const [aiStatus, setAiStatus] = useState<string | null>(null);
   
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const getBase64FromUrl = async (url: string): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      img.crossOrigin = 'anonymous';
+      const safeUrl = url.includes('?') ? `${url}&t=${Date.now()}` : `${url}?t=${Date.now()}`;
+      img.src = safeUrl;
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        canvas.width = img.width;
+        canvas.height = img.height;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) return reject('Canvas context error');
+        ctx.drawImage(img, 0, 0);
+        resolve(canvas.toDataURL('image/jpeg', 0.9));
+      };
+      img.onerror = () => reject('이미지를 불러올 수 없습니다. 다시 업로드해주세요.');
+    });
+  };
 
   const optimizeImage = (base64Str: string): Promise<string> => {
     return new Promise((resolve) => {
@@ -88,6 +107,8 @@ const RegistrationForm: React.FC<RegistrationFormProps> = ({ onSuccess, editData
     if (!file) return;
 
     setIsOptimizing(true);
+    setImageLoadError(false);
+    
     const reader = new FileReader();
     reader.onloadend = async () => {
       try {
@@ -111,35 +132,34 @@ const RegistrationForm: React.FC<RegistrationFormProps> = ({ onSuccess, editData
 
   const handleArtisticTransform = async () => {
     let base64ToUse = localBase64;
-    if (!base64ToUse && formData.imageUrl) {
-      try {
-        setIsTransforming(true);
-        setAiStatus("원본 데이터를 분석 중입니다...");
-        const resp = await fetch(formData.imageUrl);
-        const blob = await resp.blob();
-        base64ToUse = await new Promise((resolve) => {
-          const r = new FileReader();
-          r.onloadend = () => resolve(r.result as string);
-          r.readAsDataURL(blob);
-        });
-      } catch (e) { console.error("Image fetch failed"); }
-    }
-    
-    if (!base64ToUse) { alert('이미지를 먼저 업로드해주세요.'); setIsTransforming(false); return; }
-    
     setIsTransforming(true);
-    setAiStatus("Gemini가 전문 정장 프로필로 변환 중...");
     try {
+      if (!base64ToUse && formData.imageUrl) {
+        setAiStatus("기존 이미지를 분석 중...");
+        base64ToUse = await getBase64FromUrl(formData.imageUrl);
+      }
+      
+      if (!base64ToUse) {
+        alert('이미지가 깨졌거나 존재하지 않습니다. 다시 업로드한 뒤 변환해주세요.');
+        setImageLoadError(true);
+        return;
+      }
+      
+      setAiStatus("Gemini가 전문 정장 프로필로 변환 중...");
       const [header, data] = base64ToUse.split(',');
       const mime = header.match(/:(.*?);/)?.[1] || 'image/jpeg';
       const aiResultBase64 = await transformPortrait(data, mime);
+      
       setLocalBase64(aiResultBase64);
       setIsAiApplied(true);
       setIsUploading(true);
       const storageUrl = await apiService.uploadImage(aiResultBase64, `ai_profile_${formData.name || 'champion'}`);
       setFormData(prev => ({ ...prev, imageUrl: storageUrl }));
+      alert('전문 정장 프로필 사진 생성이 완료되었습니다.');
     } catch (error: any) {
-      alert('AI 프로필 생성 중 오류가 발생했습니다.');
+      console.error(error);
+      alert('AI 변환에 실패했습니다. 사진을 다시 업로드한 후 시도해주세요.');
+      setImageLoadError(true);
     } finally { 
       setIsTransforming(false); 
       setIsUploading(false);
@@ -149,7 +169,7 @@ const RegistrationForm: React.FC<RegistrationFormProps> = ({ onSuccess, editData
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.imageUrl) { alert('사진 등록이 필요합니다.'); return; }
+    if (!formData.imageUrl || imageLoadError) { alert('유효한 사진 등록이 필요합니다.'); return; }
     if (!formData.email || !formData.password) { alert('인증 정보를 입력해주세요.'); return; }
     
     setIsSubmitting(true);
@@ -159,41 +179,15 @@ const RegistrationForm: React.FC<RegistrationFormProps> = ({ onSuccess, editData
     let finalAchievement = formData.achievement;
 
     try {
-      // 1. 자동 정장 프로필 변환 (변환 안 된 상태일 때)
-      if (!isAiApplied) {
-        let base64ToTransform = localBase64;
-        
-        if (!base64ToTransform && formData.imageUrl) {
-          try {
-            setAiStatus("이미지 분석 및 정장 프로필 변환 준비...");
-            const resp = await fetch(formData.imageUrl);
-            const blob = await resp.blob();
-            base64ToTransform = await new Promise((resolve) => {
-              const r = new FileReader();
-              r.onloadend = () => resolve(r.result as string);
-              r.readAsDataURL(blob);
-            });
-          } catch (e) { console.error("Image fetch failed during auto transform"); }
-        }
+      // 사진 자동 변환 로직 제거됨 (버튼을 눌렀을 때만 변환됨)
 
-        if (base64ToTransform) {
-          setAiStatus("전문 정장 프로필 사진을 생성 중입니다...");
-          const [header, data] = base64ToTransform.split(',');
-          const mime = header.match(/:(.*?);/)?.[1] || 'image/jpeg';
-          const aiResultBase64 = await transformPortrait(data, mime);
-          const storageUrl = await apiService.uploadImage(aiResultBase64, `auto_profile_${formData.name}`);
-          finalImageUrl = storageUrl;
-          setIsAiApplied(true);
-        }
-      }
-
-      setAiStatus("Gemini가 포부를 고품격 문장으로 정제 중...");
+      setAiStatus("포부를 품격 있게 정제 중...");
       finalVision = await polishVision(formData.name, formData.department, finalVision);
 
-      setAiStatus("업적 내용을 분석하여 임팩트 있게 고도화 중...");
+      setAiStatus("업적을 임팩트 있게 고도화 중...");
       finalAchievement = await polishAchievement(formData.name, formData.department, formData.role, finalAchievement);
 
-      setAiStatus("기록을 아카이브에 안전하게 저장 중...");
+      setAiStatus("영구 기록물 저장 중...");
 
       if (isEditMode && editData) {
         await apiService.updateChampion({ 
@@ -203,7 +197,7 @@ const RegistrationForm: React.FC<RegistrationFormProps> = ({ onSuccess, editData
           vision: finalVision, 
           achievement: finalAchievement 
         });
-        alert('프로필이 성공적으로 업데이트되었습니다.');
+        alert('기록이 성공적으로 업데이트되었습니다.');
         onSuccess();
       } else {
         const newId = `champ_${Date.now()}`;
@@ -218,11 +212,12 @@ const RegistrationForm: React.FC<RegistrationFormProps> = ({ onSuccess, editData
           viewCount: 0
         });
         storageService.addOwnership(newId);
-        alert('명예의 전당 등록이 완료되었습니다. 환영합니다!');
+        alert('명예의 전당 등록이 완료되었습니다.');
         onSuccess();
       }
     } catch (err) {
-      alert('저장 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.');
+      console.error(err);
+      alert('저장 중 오류가 발생했습니다.');
     } finally { 
       setIsSubmitting(false);
       setAiStatus(null);
@@ -251,27 +246,41 @@ const RegistrationForm: React.FC<RegistrationFormProps> = ({ onSuccess, editData
                   {aiStatus || "AI 엔진 처리 중..."}
                 </p>
               </div>
-            ) : previewImage ? (
+            ) : previewImage && !imageLoadError ? (
               <>
                 <img src={previewImage} className="absolute inset-0 w-full h-full object-cover blur-3xl opacity-30 scale-125" alt="Blur" />
-                <img src={previewImage} className="relative z-10 w-full h-full object-contain" alt="Profile" />
+                <img 
+                  src={previewImage} 
+                  className="relative z-10 w-full h-full object-contain" 
+                  alt="Profile" 
+                  onError={() => setImageLoadError(true)} 
+                />
               </>
             ) : (
-              <div className="text-center p-10 opacity-30 group-hover:opacity-100 transition-all duration-500">
-                <div className="w-16 h-16 border-2 border-dashed border-white/40 rounded-full flex items-center justify-center mx-auto mb-6">
-                  <span className="text-3xl text-white">+</span>
+              <div className="text-center p-10 group-hover:opacity-100 transition-all duration-500">
+                <div className={`w-16 h-16 border-2 border-dashed ${imageLoadError ? 'border-red-500' : 'border-white/40'} rounded-full flex items-center justify-center mx-auto mb-6`}>
+                  <span className={`text-3xl ${imageLoadError ? 'text-red-500' : 'text-white'}`}>{imageLoadError ? '!' : '+'}</span>
                 </div>
-                <p className="text-[10px] font-black uppercase tracking-widest text-white">사진 업로드</p>
+                <p className={`text-[10px] font-black uppercase tracking-widest ${imageLoadError ? 'text-red-500' : 'text-white'}`}>
+                  {imageLoadError ? '이미지 로드 실패: 클릭하여 다시 업로드' : '사진 업로드'}
+                </p>
               </div>
             )}
-            <input type="file" ref={fileInputRef} onChange={handleImageUpload} className="absolute inset-0 opacity-0 cursor-pointer" accept="image/*" disabled={isAnyLoading} />
+            <input 
+              type="file" 
+              ref={fileInputRef} 
+              onChange={handleImageUpload} 
+              className="absolute inset-0 opacity-0 cursor-pointer z-30" 
+              accept="image/*" 
+              disabled={isAnyLoading} 
+            />
           </div>
           
           <button 
             type="button" 
             onClick={handleArtisticTransform} 
-            disabled={!formData.imageUrl || isAnyLoading}
-            className={`w-full py-5 border-2 font-black text-[11px] tracking-[0.3em] uppercase transition-all duration-500 ${formData.imageUrl && !isAnyLoading ? 'bg-white/5 border-yellow-500/40 text-yellow-500 hover:bg-yellow-500 hover:text-black shadow-lg shadow-yellow-500/10' : 'opacity-20 cursor-not-allowed border-white/10'}`}
+            disabled={!formData.imageUrl || isAnyLoading || imageLoadError}
+            className={`w-full py-5 border-2 font-black text-[11px] tracking-[0.3em] uppercase transition-all duration-500 ${formData.imageUrl && !isAnyLoading && !imageLoadError ? 'bg-white/5 border-yellow-500/40 text-yellow-500 hover:bg-yellow-500 hover:text-black shadow-lg shadow-yellow-500/10' : 'opacity-20 cursor-not-allowed border-white/10'}`}
           >
             {isTransforming ? '프로필 생성 중...' : 'Gemini 전문 정장 프로필 변환'}
           </button>
@@ -316,7 +325,7 @@ const RegistrationForm: React.FC<RegistrationFormProps> = ({ onSuccess, editData
 
           <div className="flex flex-col space-y-4 pt-4 border-t border-white/5">
             <div className="flex items-center justify-between">
-              <label className="text-[11px] font-black uppercase tracking-widest text-white/70">혁신 포부</label>
+              <label className="text-[11px] font-black uppercase tracking-widest text-white/70">AI 챔피언으로서 포부</label>
               <span className="text-[9px] text-yellow-500/40 uppercase font-black">AI 자동 완성 적용</span>
             </div>
             <textarea required rows={3} value={formData.vision} onChange={e => setFormData({...formData, vision: e.target.value})} className="bg-white/[0.04] border border-white/10 p-5 text-sm font-medium italic text-white focus:border-yellow-500 outline-none leading-relaxed transition-all" placeholder="생각나는 대로 입력하세요. AI가 멋지게 다듬어드립니다." />
@@ -324,7 +333,7 @@ const RegistrationForm: React.FC<RegistrationFormProps> = ({ onSuccess, editData
 
           <div className="flex flex-col space-y-4">
             <div className="flex items-center justify-between">
-              <label className="text-[11px] font-black uppercase tracking-widest text-white/70">주요 혁신 업적</label>
+              <label className="text-[11px] font-black uppercase tracking-widest text-white/70">주요 업적 및 프로젝트</label>
               <span className="text-[9px] text-yellow-500/40 uppercase font-black">AI 고도화 적용</span>
             </div>
             <textarea rows={3} value={formData.achievement} onChange={e => setFormData({...formData, achievement: e.target.value})} className="bg-white/[0.04] border border-white/10 p-5 text-sm font-medium text-white focus:border-yellow-500 outline-none leading-relaxed transition-all" placeholder="업적을 입력하시면 AI가 더욱 임팩트 있게 고도화해드립니다." />

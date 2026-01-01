@@ -31,10 +31,12 @@ export const CERT_DETAILS = {
       '민원 매뉴얼 기반 응답형 챗봇 서비스 구현'
     ],
     color: 'text-emerald-400',
-    glow: 'shadow-[0_0_20px_rgba(52,211,153,0.1)]',
-    border: 'border-emerald-500/20',
-    bg: 'from-emerald-950/20 to-black',
-    accent: 'bg-emerald-500',
+    glow: 'shadow-[0_0_30px_rgba(16,185,129,0.25)]',
+    border: 'border-emerald-500/30',
+    bg: 'from-emerald-950/40 to-black',
+    accent: 'bg-emerald-400',
+    rankBg: 'bg-emerald-950/80',
+    textShadow: 'shadow-emerald-500/50',
     icon: '◈'
   },
   [CertificationType.BLUE]: {
@@ -47,10 +49,12 @@ export const CERT_DETAILS = {
       '데이터 분석 및 모델링을 통한 공공 서비스 최적화'
     ],
     color: 'text-blue-400',
-    glow: 'shadow-[0_0_20px_rgba(96,165,250,0.1)]',
-    border: 'border-blue-500/20',
-    bg: 'from-blue-950/20 to-black',
-    accent: 'bg-blue-500',
+    glow: 'shadow-[0_0_30px_rgba(59,130,246,0.25)]',
+    border: 'border-blue-500/30',
+    bg: 'from-blue-950/40 to-black',
+    accent: 'bg-blue-400',
+    rankBg: 'bg-blue-950/80',
+    textShadow: 'shadow-blue-500/50',
     icon: '✦'
   },
   [CertificationType.BLACK]: {
@@ -63,10 +67,12 @@ export const CERT_DETAILS = {
       '2026년 도입 예정인 최고 등급 마스터 과정'
     ],
     color: 'text-yellow-500',
-    glow: 'shadow-[0_0_30px_rgba(234,179,8,0.2)]',
-    border: 'border-yellow-600/30',
-    bg: 'from-yellow-950/20 to-black',
+    glow: 'shadow-[0_0_40px_rgba(234,179,8,0.4)]',
+    border: 'border-yellow-600/50',
+    bg: 'from-yellow-950/40 to-black',
     accent: 'bg-yellow-500',
+    rankBg: 'bg-black/90',
+    textShadow: 'shadow-yellow-500/50',
     icon: '★'
   }
 };

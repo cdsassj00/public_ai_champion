@@ -5,7 +5,7 @@ import { Champion } from '../types';
 import { CERT_DETAILS } from '../constants';
 import { storageService } from '../services/storageService';
 import { apiService } from '../services/apiService';
-import { polishVision, polishAchievement, transformPortrait } from '../services/geminiService';
+import { polishVision, polishAchievement } from '../services/geminiService';
 
 const MASTER_PASSWORD = '111111';
 
@@ -14,7 +14,7 @@ interface ChampionModalProps {
   onClose: () => void;
   onEdit: (champion: Champion) => void;
   onDelete?: (id: string) => void;
-  onUpdate?: (champion: Champion) => void; // 데이터 갱신 알림 추가
+  onUpdate?: (champion: Champion) => void; 
 }
 
 const ChampionModal: React.FC<ChampionModalProps> = ({ champion: initialChampion, onClose, onEdit, onDelete, onUpdate }) => {
@@ -30,7 +30,6 @@ const ChampionModal: React.FC<ChampionModalProps> = ({ champion: initialChampion
   const [imageError, setImageError] = useState(false);
   const [refineStatus, setRefineStatus] = useState<string | null>(null);
   
-  // 현재 챔피언 ID에 대해 자동 정제가 이미 수행되었는지 추적
   const refinedIds = useRef<Set<string>>(new Set());
 
   const resetAuthFields = useCallback(() => {
@@ -39,14 +38,11 @@ const ChampionModal: React.FC<ChampionModalProps> = ({ champion: initialChampion
   }, []);
 
   const autoRefine = useCallback(async (data: Champion) => {
-    // 이미 정제 중이거나, 이번 세션에서 이미 정제한 ID면 건너뜀
     if (isRefining || refinedIds.current.has(data.id)) return;
     
-    // 정제가 필요한 조건인지 확인
     const needsVisionRefine = data.vision.length < 25;
     const needsAchievementRefine = !data.achievement || data.achievement.length < 20;
     
-    // 텍스트가 이미 충분히 길다면(고도화되었다면) 자동 실행 안 함
     if (!needsVisionRefine && !needsAchievementRefine) return;
 
     setIsRefining(true);
@@ -59,15 +55,9 @@ const ChampionModal: React.FC<ChampionModalProps> = ({ champion: initialChampion
       if (needsAchievementRefine) refinedAchievement = await polishAchievement(data.name, data.department, data.role, data.achievement || "");
       
       const updated = { ...data, vision: refinedVision, achievement: refinedAchievement };
-      
-      // DB 업데이트
       await apiService.updateChampion(updated);
-      
-      // 상태 업데이트 및 부모에게 알림
       setChampion(updated);
       onUpdate?.(updated);
-      
-      // 처리 완료 목록에 추가
       refinedIds.current.add(data.id);
     } catch (error) {
       console.error("Auto Refine Failed:", error);
@@ -86,13 +76,12 @@ const ChampionModal: React.FC<ChampionModalProps> = ({ champion: initialChampion
       setImageError(false);
       resetAuthFields();
       
-      // 0.5초 뒤에 자동 정제 여부 판단 (UI가 먼저 뜨게 함)
       const timer = setTimeout(() => {
         autoRefine(initialChampion);
       }, 500);
       return () => clearTimeout(timer);
     }
-  }, [initialChampion?.id]); // ID가 바뀔 때만 실행 (무한루프 방지)
+  }, [initialChampion?.id]);
 
   if (!champion) return null;
 
@@ -111,33 +100,16 @@ const ChampionModal: React.FC<ChampionModalProps> = ({ champion: initialChampion
   const handleManualRefine = async () => {
     if (isRefining) return;
     setIsRefining(true);
-    setRefineStatus("전문 정장 프로필 사진 생성 및 문구 고도화 중...");
+    setRefineStatus("기록물 텍스트 고도화 중...");
     try {
       const refinedVision = await polishVision(champion.name, champion.department, champion.vision);
       const refinedAchievement = await polishAchievement(champion.name, champion.department, champion.role, champion.achievement || "");
       
-      let finalImageUrl = champion.imageUrl;
-      try {
-        const resp = await fetch(champion.imageUrl);
-        const blob = await resp.blob();
-        const base64 = await new Promise<string>((resolve) => {
-          const reader = new FileReader();
-          reader.onloadend = () => resolve(reader.result as string);
-          reader.readAsDataURL(blob);
-        });
-        const [header, data] = base64.split(',');
-        const mime = header.match(/:(.*?);/)?.[1] || 'image/jpeg';
-        const aiResultBase64 = await transformPortrait(data, mime);
-        finalImageUrl = await apiService.uploadImage(aiResultBase64, `manual_profile_${champion.name}`);
-      } catch (imgErr) {
-        console.warn("Image transform failed, skipping image part.");
-      }
-
-      const updated = { ...champion, vision: refinedVision, achievement: refinedAchievement, imageUrl: finalImageUrl };
+      const updated = { ...champion, vision: refinedVision, achievement: refinedAchievement };
       await apiService.updateChampion(updated);
       setChampion(updated);
       onUpdate?.(updated);
-      alert('AI가 전문 정장 프로필 사진 및 기록물 고도화를 완료했습니다.');
+      alert('AI가 포부 및 업적 프로젝트 고도화를 완료했습니다.');
     } catch (error) {
       alert('AI 고도화 중 오류가 발생했습니다.');
     } finally {
@@ -193,9 +165,10 @@ const ChampionModal: React.FC<ChampionModalProps> = ({ champion: initialChampion
           initial={{ opacity: 0, scale: 0.98, y: 20 }} 
           animate={{ opacity: 1, scale: 1, y: 0 }} 
           exit={{ opacity: 0, scale: 0.98, y: 20 }} 
-          className={`relative w-full max-w-5xl bg-neutral-950 border ${details.border} rounded-sm overflow-hidden flex flex-col md:flex-row max-h-[95vh] md:max-h-[85vh] shadow-[0_0_120px_rgba(0,0,0,1)]`}
+          className={`relative w-full max-w-6xl bg-neutral-950 border ${details.border} rounded-sm overflow-hidden flex flex-col md:flex-row max-h-[95vh] md:max-h-[85vh] shadow-[0_0_150px_rgba(0,0,0,1)] ${details.glow}`}
         >
-          <div className={`absolute top-0 left-0 right-0 h-1.5 ${details.accent} z-50`}></div>
+          {/* Rank Glow Top Bar */}
+          <div className={`absolute top-0 left-0 right-0 h-1.5 ${details.accent} z-50 shadow-[0_0_20px_currentColor]`}></div>
 
           <button onClick={onClose} className="absolute top-4 right-4 z-[70] text-white/40 hover:text-white transition-all bg-black/60 p-2.5 rounded-full border border-white/10 backdrop-blur-xl">
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path></svg>
@@ -221,92 +194,111 @@ const ChampionModal: React.FC<ChampionModalProps> = ({ champion: initialChampion
               <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 z-[80] bg-red-950/98 backdrop-blur-3xl flex items-center justify-center p-6 text-center">
                 <div className="max-w-xs w-full space-y-6">
                   <h3 className="text-2xl font-black serif-title text-white uppercase tracking-widest">기록 소멸</h3>
-                  <p className="text-xs text-white/60 leading-relaxed font-light break-keep">이 챔피언의 기록을 명예의 전당에서 영구히 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.</p>
+                  <p className="text-xs text-white/60 leading-relaxed font-light break-keep">기록을 영구히 삭제하시겠습니까?</p>
                   <div className="flex gap-2">
                     <button onClick={() => setShowDeleteConfirm(false)} className="flex-1 py-3.5 border border-white/10 text-[10px] font-black tracking-widest">유지하기</button>
-                    <button onClick={executeDelete} disabled={isDeleting} className="flex-1 py-3.5 bg-red-600 text-white text-[10px] font-black tracking-widest shadow-2xl">{isDeleting ? '소멸 중' : '영구 삭제'}</button>
+                    <button onClick={executeDelete} disabled={isDeleting} className="flex-1 py-3.5 bg-red-600 text-white text-[10px] font-black tracking-widest shadow-2xl">삭제</button>
                   </div>
                 </div>
               </motion.div>
             )}
           </AnimatePresence>
 
-          <div className="h-72 sm:h-96 md:h-auto md:w-[400px] lg:w-[450px] shrink-0 relative bg-black overflow-hidden md:border-r border-white/5 flex items-center justify-center">
+          <div className="h-72 sm:h-96 md:h-auto md:w-[450px] shrink-0 relative bg-black overflow-hidden md:border-r border-white/5 flex items-center justify-center">
             {isRefining && (
-              <div className="absolute inset-0 z-30 bg-black/60 backdrop-blur-sm flex flex-col items-center justify-center p-6 text-center">
-                <div className="w-10 h-10 border-2 border-yellow-500 border-t-transparent rounded-full animate-spin mb-4"></div>
-                <p className="text-[10px] font-black text-yellow-500 uppercase tracking-widest animate-pulse">{refineStatus}</p>
+              <div className="absolute inset-0 z-30 bg-black/80 backdrop-blur-md flex flex-col items-center justify-center p-6 text-center">
+                <div className={`w-12 h-12 border-4 ${details.border} border-t-transparent rounded-full animate-spin mb-4 shadow-[0_0_20px_currentColor]`}></div>
+                <p className={`text-[11px] font-black ${details.color} uppercase tracking-widest animate-pulse`}>{refineStatus}</p>
               </div>
             )}
             {!imageError ? (
               <>
                 <img src={champion.imageUrl} className="absolute inset-0 w-full h-full object-cover blur-3xl opacity-30 scale-125" alt="Backdrop" />
-                <img src={champion.imageUrl} alt={champion.name} onError={() => setImageError(true)} className="relative z-10 w-full h-full object-contain contrast-[1.05] object-center transition-transform duration-1000 hover:scale-105" />
+                <img src={champion.imageUrl} alt={champion.name} onError={() => setImageError(true)} className="relative z-10 w-full h-full object-contain contrast-[1.1] brightness-[1.05] object-center transition-transform duration-1000 hover:scale-110" />
               </>
             ) : (
               <div className="w-full h-full flex flex-col items-center justify-center p-12 bg-neutral-900 z-10">
-                <div className={`w-20 h-20 rounded-full ${details.accent} opacity-20 flex items-center justify-center mb-6`}>
-                  <span className="text-3xl font-bold">{champion.name[0]}</span>
+                <div className={`w-24 h-24 rounded-full ${details.accent} opacity-20 flex items-center justify-center mb-6 shadow-inner`}>
+                  <span className="text-4xl font-black">{champion.name[0]}</span>
                 </div>
-                <span className="text-xs font-bold text-white/30 tracking-[0.5em] uppercase">No Profile Photo</span>
+                <span className="text-[10px] font-bold text-white/30 tracking-[0.5em] uppercase">No Portrait Available</span>
               </div>
             )}
-            <div className="absolute inset-0 bg-gradient-to-t from-neutral-950 via-transparent to-transparent opacity-60 pointer-events-none z-15"></div>
-            <div className="absolute top-6 left-6 flex flex-col gap-2 z-20">
-               <div className={`px-4 py-1.5 bg-black/80 backdrop-blur-2xl border ${details.border} rounded-full flex items-center space-x-2.5 shadow-2xl`}>
-                 <div className={`w-2 h-2 rounded-full ${details.accent} animate-pulse`}></div>
-                 <span className={`text-[10px] font-black tracking-[0.4em] uppercase ${details.color}`}>{champion.certType} RANK ELITE</span>
+            <div className="absolute inset-0 bg-gradient-to-t from-neutral-950 via-transparent to-transparent opacity-80 pointer-events-none z-15"></div>
+            
+            {/* Rank Badge on Modal Image */}
+            <div className="absolute top-8 left-8 flex flex-col gap-3 z-20">
+               <div className={`px-5 py-2 ${details.rankBg} backdrop-blur-3xl border ${details.border} rounded-full flex items-center space-x-3 shadow-[0_10px_40px_rgba(0,0,0,0.8)]`}>
+                 <div className={`relative flex h-3 w-3`}>
+                    <span className={`animate-ping absolute inline-flex h-full w-full rounded-full ${details.accent} opacity-75`}></span>
+                    <span className={`relative inline-flex rounded-full h-3 w-3 ${details.accent}`}></span>
+                 </div>
+                 <span className={`text-[11px] font-black tracking-[0.5em] uppercase ${details.color} drop-shadow-[0_0_10px_currentColor]`}>
+                   {champion.certType} RANK ELITE
+                 </span>
                </div>
             </div>
           </div>
 
           <div className="flex-1 flex flex-col min-w-0 overflow-hidden relative">
-            <div className="flex-1 overflow-y-auto p-8 md:p-14 lg:p-16 custom-scrollbar relative z-10">
-              <div className="mb-12">
-                <div className={`inline-block px-4 py-1.5 mb-8 text-[10px] font-black tracking-[0.5em] border ${details.border} ${details.color} uppercase bg-black/40 rounded-sm shadow-xl`}>
+            <div className="flex-1 overflow-y-auto p-10 md:p-16 lg:p-20 custom-scrollbar relative z-10">
+              <div className="mb-14">
+                <div className={`inline-block px-5 py-2 mb-10 text-[11px] font-black tracking-[0.6em] border ${details.border} ${details.color} uppercase bg-white/5 backdrop-blur-xl rounded-sm shadow-2xl drop-shadow-[0_0_8px_currentColor]`}>
                   {details.title}
                 </div>
-                <h2 className="text-4xl md:text-7xl font-black serif-title text-white mb-6 tracking-tighter leading-tight break-keep">{champion.name}</h2>
-                <div className="flex flex-wrap items-center gap-2.5 text-white/50 text-xs md:text-base font-light">
-                  <span className="px-4 py-2 bg-white/[0.03] border border-white/5 rounded-full">{champion.department}</span>
-                  <span className="px-4 py-2 bg-white/[0.03] border border-white/5 rounded-full">{champion.role}</span>
+                <h2 className="text-5xl md:text-8xl font-black serif-title text-white mb-8 tracking-tighter leading-tight break-keep drop-shadow-2xl">{champion.name}</h2>
+                <div className="flex flex-wrap items-center gap-3 text-white/60 text-sm md:text-lg font-light italic">
+                  <span className="px-6 py-2.5 bg-white/[0.04] border border-white/10 rounded-full backdrop-blur-md">{champion.department}</span>
+                  <span className="px-6 py-2.5 bg-white/[0.04] border border-white/10 rounded-full backdrop-blur-md">{champion.role}</span>
                 </div>
               </div>
 
-              <div className="space-y-12 md:space-y-16 pb-12">
-                <section className="relative">
-                  <div className={`absolute -left-6 top-0 bottom-0 w-[2px] bg-gradient-to-b ${details.accent.replace('bg-', 'from-')}/50 to-transparent`}></div>
-                  <div className="flex items-center justify-between mb-5">
-                    <h4 className={`text-[10px] font-black uppercase tracking-[0.3em] ${details.color} opacity-40`}>The Visionary Statement</h4>
+              <div className="space-y-16 md:space-y-24 pb-12">
+                <section className="relative pl-12">
+                  <div className={`absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b ${details.accent.replace('bg-', 'from-')}/60 to-transparent shadow-[0_0_15px_currentColor]`}></div>
+                  <div className="mb-6">
+                    <h4 className={`text-[11px] font-black uppercase tracking-[0.4em] ${details.color} opacity-60 flex items-center gap-3`}>
+                      <span className="w-8 h-[1px] bg-current opacity-30"></span> AI MISSION & VISION
+                    </h4>
                   </div>
-                  <p className="text-xl md:text-3xl font-light italic text-white/95 leading-tight break-keep">"{champion.vision}"</p>
+                  <p className="text-2xl md:text-4xl font-light italic text-white leading-[1.2] break-keep">
+                    "{champion.vision}"
+                  </p>
                 </section>
                 
                 {champion.achievement && (
                   <section>
-                    <h4 className={`text-[10px] font-black uppercase tracking-[0.3em] ${details.color} mb-5 opacity-40`}>Impact Assessment</h4>
-                    <div className={`p-8 md:p-10 bg-white/[0.02] border border-white/5 backdrop-blur-3xl relative rounded-sm shadow-inner`}>
-                      <div className={`absolute top-0 left-0 w-1.5 h-full ${details.accent} shadow-2xl`}></div>
-                      <p className="text-sm md:text-xl text-white/80 leading-relaxed font-light break-keep">{champion.achievement}</p>
+                    <div className="mb-8">
+                       <h4 className={`text-[11px] font-black uppercase tracking-[0.4em] ${details.color} opacity-60 flex items-center gap-3`}>
+                        <span className="w-8 h-[1px] bg-current opacity-30"></span> KEY ACHIEVEMENTS
+                      </h4>
+                    </div>
+                    <div className={`p-10 md:p-14 bg-white/[0.02] border border-white/5 backdrop-blur-3xl relative rounded-sm shadow-inner overflow-hidden`}>
+                      <div className={`absolute top-0 left-0 w-2 h-full ${details.accent} opacity-80 shadow-[0_0_20px_currentColor]`}></div>
+                      {/* Decorative Background Icon */}
+                      <div className={`absolute -right-10 -bottom-10 text-[12rem] font-black opacity-[0.02] pointer-events-none ${details.color}`}>
+                        {details.icon}
+                      </div>
+                      <p className="text-lg md:text-2xl text-white/90 leading-relaxed font-light break-keep relative z-10">{champion.achievement}</p>
                     </div>
                   </section>
                 )}
               </div>
             </div>
 
-            <div className="p-6 md:p-10 border-t border-white/5 bg-neutral-950/95 backdrop-blur-3xl flex flex-wrap items-center justify-end gap-3 relative z-20">
+            <div className="p-8 md:p-12 border-t border-white/5 bg-neutral-950/98 backdrop-blur-3xl flex flex-wrap items-center justify-end gap-4 relative z-20">
               {isAuthorized && (
                 <button 
                   onClick={handleManualRefine}
                   disabled={isRefining}
-                  className="mr-auto px-4 py-3 bg-yellow-500/10 border border-yellow-500/30 text-yellow-500 text-[10px] font-black uppercase tracking-widest hover:bg-yellow-500 hover:text-black transition-all rounded-sm flex items-center gap-2"
+                  className={`mr-auto px-6 py-4 bg-white/5 border ${details.border} ${details.color} text-[11px] font-black uppercase tracking-widest hover:bg-white hover:text-black transition-all rounded-sm flex items-center gap-3 shadow-xl`}
                 >
-                  <span className="text-xs">✨</span> {isRefining ? 'AI 고도화 중' : 'AI 프로필 및 기록물 고도화'}
+                  <span className="text-sm animate-pulse">✨</span> {isRefining ? 'REFASHIONING...' : 'AI RECORD POLISH'}
                 </button>
               )}
               
-              <button onClick={() => handleManagementAction('DELETE')} disabled={isDeleting} className="px-6 py-4 border border-white/5 text-white/20 text-[10px] font-black uppercase tracking-widest hover:text-red-500 transition-all rounded-sm">삭제</button>
-              <button onClick={() => handleManagementAction('EDIT')} className={`flex-1 md:flex-none px-10 py-4 border ${details.border} ${details.color} text-[11px] font-black uppercase tracking-[0.4em] hover:bg-white hover:text-black transition-all duration-500 rounded-sm shadow-2xl`}>기록 수정</button>
+              <button onClick={() => handleManagementAction('DELETE')} disabled={isDeleting} className="px-8 py-4 border border-white/5 text-white/20 text-[11px] font-black uppercase tracking-widest hover:text-red-500 hover:border-red-500/30 transition-all rounded-sm">TERMINATE</button>
+              <button onClick={() => handleManagementAction('EDIT')} className={`flex-1 md:flex-none px-14 py-5 border ${details.border} ${details.color} text-[12px] font-black uppercase tracking-[0.5em] hover:bg-white hover:text-black transition-all duration-500 rounded-sm shadow-2xl drop-shadow-[0_0_10px_currentColor]`}>EDIT RECORD</button>
             </div>
           </div>
         </motion.div>

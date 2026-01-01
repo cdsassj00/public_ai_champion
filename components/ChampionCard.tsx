@@ -18,12 +18,11 @@ const ChampionCard: React.FC<ChampionCardProps> = ({ champion, index, onClick })
 
   const getImageUrl = () => {
     if (!champion.imageUrl) return `https://i.pravatar.cc/600?u=${champion.id}`;
-    return champion.imageUrl;
+    const url = champion.imageUrl;
+    return url.includes('?') ? `${url}&t=${champion.id}` : `${url}?t=${champion.id}`;
   };
 
   const displayImage = getImageUrl();
-  
-  // 내용이 짧거나 업적이 없으면 'Raw' (AI 미정제) 상태로 간주
   const isUnrefined = (champion.vision?.length || 0) < 20 || !champion.achievement || champion.achievement.length < 10;
 
   return (
@@ -41,19 +40,20 @@ const ChampionCard: React.FC<ChampionCardProps> = ({ champion, index, onClick })
         }
       }}
       exit={{ opacity: 0, scale: 0.95 }}
-      whileHover={{ y: -4, transition: { duration: 0.2 } }}
+      whileHover={{ y: -8, transition: { duration: 0.3 } }}
       onClick={() => onClick(champion)}
-      className={`group relative flex flex-col bg-neutral-900 border ${details.border} overflow-hidden transition-all duration-500 cursor-pointer ${details.glow} hover:shadow-[0_15px_40px_rgba(0,0,0,0.6)]`}
+      className={`group relative flex flex-col bg-neutral-900 border ${details.border} overflow-hidden transition-all duration-500 cursor-pointer ${details.glow} hover:shadow-[0_30px_80px_rgba(0,0,0,0.95)] rounded-sm`}
     >
-      <div className={`absolute top-0 left-0 right-0 h-[1.5px] ${details.accent} opacity-40 group-hover:opacity-100 transition-opacity z-20`}></div>
+      {/* Dynamic Glow Line */}
+      <div className={`absolute top-0 left-0 right-0 h-1 ${details.accent} z-40 opacity-100 shadow-[0_0_15px_currentColor]`}></div>
 
-      <div className="relative aspect-[3/4] overflow-hidden bg-black flex items-center justify-center">
+      {/* Image Area */}
+      <div className="relative aspect-[4/5] overflow-hidden bg-black flex items-center justify-center">
         {!imageError ? (
           <>
-            {/* 비율 보존을 위한 배경 블러 - 사진이 잘리지 않게 여백을 채움 */}
             <img 
               src={displayImage} 
-              className="absolute inset-0 w-full h-full object-cover blur-2xl opacity-40 scale-125"
+              className="absolute inset-0 w-full h-full object-cover blur-2xl opacity-20 scale-125"
               alt="Backdrop"
             />
             <img 
@@ -61,39 +61,65 @@ const ChampionCard: React.FC<ChampionCardProps> = ({ champion, index, onClick })
               alt={champion.name}
               onError={() => setImageError(true)}
               loading="lazy"
-              className="relative z-10 w-full h-full object-contain transition-transform duration-700 group-hover:scale-105"
+              className="relative z-10 w-full h-full object-contain transition-all duration-1000 group-hover:scale-110 group-hover:contrast-[1.1]"
             />
           </>
         ) : (
-          <div className="text-center p-2 z-10">
-            <div className={`w-8 h-8 rounded-full ${details.accent} opacity-20 mx-auto mb-1 flex items-center justify-center`}>
-              <span className="text-white/40 text-[10px] font-bold">{champion.name ? champion.name[0] : '?'}</span>
-            </div>
-            <p className="text-[6px] text-white/20 uppercase tracking-widest font-bold">Image Info</p>
+          <div className="text-center p-4 z-10 opacity-30">
+            <span className="text-4xl font-black">{champion.name ? champion.name[0] : 'AI'}</span>
           </div>
         )}
         
-        <div className="absolute inset-x-0 bottom-0 h-1/4 bg-gradient-to-t from-black/90 to-transparent z-15"></div>
+        {/* Protection Scrim */}
+        <div className="absolute inset-x-0 bottom-0 h-2/5 bg-gradient-to-t from-black via-black/80 to-transparent z-20"></div>
         
-        <div className="absolute top-1.5 left-1.5 flex flex-col gap-1 z-20">
-           <div className={`px-1.5 py-0.5 text-[6px] sm:text-[8px] font-black tracking-tighter border ${details.border} backdrop-blur-3xl bg-black/70 ${details.color} uppercase flex items-center gap-1 shadow-lg`}>
-            {champion.certType}
-          </div>
-          {isOwner && <div className="px-1.5 py-0.5 text-[5px] font-black bg-white text-black uppercase w-fit">MY</div>}
-          {isUnrefined && <div className="px-1.5 py-0.5 text-[5px] font-black bg-yellow-500 text-black uppercase w-fit animate-pulse">RAW</div>}
+        {/* Enhanced Rank Badge */}
+        <div className="absolute top-4 left-0 z-40 flex flex-col items-start gap-1">
+           <div className={`relative pl-4 pr-3 py-1.5 ${details.rankBg} backdrop-blur-xl border-y border-r ${details.border} rounded-r-full shadow-[0_8px_20px_rgba(0,0,0,0.8)] flex items-center gap-2 group-hover:translate-x-1.5 transition-transform duration-500`}>
+              <div className="relative flex h-2 w-2">
+                <span className={`animate-ping absolute inline-flex h-full w-full rounded-full ${details.accent} opacity-75`}></span>
+                <span className={`relative inline-flex rounded-full h-2 w-2 ${details.accent}`}></span>
+              </div>
+              <span className={`text-[10px] font-black tracking-[0.25em] uppercase ${details.color} drop-shadow-[0_0_8px_currentColor]`}>
+                {champion.certType}
+              </span>
+           </div>
+           
+           {isOwner && (
+            <div className="ml-4 px-2 py-0.5 text-[7px] font-black bg-white text-black uppercase rounded-sm shadow-lg border border-white/20">
+              OWNER
+            </div>
+           )}
+        </div>
+
+        {/* Floating Icon Decoration */}
+        <div className={`absolute -right-4 -top-4 text-8xl font-black opacity-[0.03] group-hover:opacity-[0.08] transition-opacity pointer-events-none select-none ${details.color}`}>
+          {details.icon}
         </div>
       </div>
 
-      <div className="p-1.5 sm:p-2.5 flex flex-col bg-neutral-950 border-t border-white/5 relative">
-        <span className={`text-[6px] sm:text-[7px] ${details.color} opacity-60 uppercase tracking-widest mb-0.5 font-black truncate`}>
-          {champion.department}
-        </span>
-        <h3 className="text-[10px] sm:text-[13px] font-bold serif-title text-white group-hover:text-yellow-500 transition-colors truncate">
+      {/* Info Panel */}
+      <div className="p-5 flex flex-col bg-neutral-950 border-t border-white/5 relative z-30 min-h-[140px] justify-center">
+        <div className="mb-2.5">
+          <span className={`inline-block px-2.5 py-1 text-[9px] font-black uppercase tracking-wider ${details.color} bg-white/[0.03] border ${details.border} rounded-sm shadow-sm`}>
+            {champion.department}
+          </span>
+        </div>
+
+        <h3 className="text-xl font-bold serif-title text-white group-hover:text-white transition-all duration-500 truncate leading-tight">
           {champion.name}
         </h3>
-        <p className="text-[7px] sm:text-[8px] text-white/20 font-medium truncate italic leading-none mt-0.5">
+
+        <p className="text-[11px] text-white/40 font-medium truncate italic mt-1.5 group-hover:text-white/60 transition-colors">
           {champion.role}
         </p>
+
+        <div className="mt-3 flex items-center justify-between opacity-30 group-hover:opacity-60 transition-opacity">
+           <span className="text-[8px] font-bold tracking-widest text-white/40 uppercase">EXCELLENCE ARCHIVE</span>
+           {isUnrefined && (
+            <span className="text-[8px] text-yellow-500 font-black animate-pulse">OPTIMIZING</span>
+          )}
+        </div>
       </div>
     </motion.div>
   );

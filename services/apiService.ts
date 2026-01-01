@@ -2,7 +2,6 @@
 import { createClient } from '@supabase/supabase-js';
 import { Champion, CertificationType } from '../types';
 
-// Vercel 환경 변수가 있으면 그것을 사용하고, 없으면 기본값을 사용합니다.
 const SUPABASE_URL = process.env.VITE_SUPABASE_URL || 'https://bvyasjtxydfdzwlaftve.supabase.co';
 const SUPABASE_ANON_KEY = process.env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ2eWFzanR4eWRmZHp3bGFmdHZlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjY4NDAzNzAsImV4cCI6MjA4MjQxNjM3MH0.Skg8IQgvB55jiIWYCOYLIORHpUvYHr44EIwVWxmTNtU';
 
@@ -17,8 +16,6 @@ export const apiService = {
         .order('registered_at', { ascending: false });
 
       if (error) throw error;
-      
-      // DB에 데이터가 없거나 에러가 나면 무조건 빈 배열을 반환합니다. (김혁신 등 목업 데이터 절대 노출 금지)
       if (!data || data.length === 0) return [];
 
       return data.map((row: any) => ({
@@ -38,8 +35,8 @@ export const apiService = {
         password: row.password || ''
       }));
     } catch (err) {
-      console.warn("Supabase fetch failed, returning empty list:", err);
-      return []; // 어떤 상황에서도 빈 배열을 반환하여 Placeholder를 노출시킵니다.
+      console.warn("Supabase fetch failed:", err);
+      return [];
     }
   },
 
@@ -57,8 +54,13 @@ export const apiService = {
 
       const timestamp = Date.now();
       const randomStr = Math.random().toString(36).substring(7);
-      const safeFileName = fileName.replace(/[^a-z0-9]/gi, '_').toLowerCase();
-      const filePath = `profiles/${safeFileName}_${timestamp}_${randomStr}.jpg`;
+      
+      // 개선: 한국어 이름이 포함되어도 안전한 파일명 생성 (Base64 인코딩 또는 단순화)
+      // 영문/숫자 외에는 _ 로 치환하되, 빈 문자열이 되지 않도록 보장
+      let safeName = fileName.replace(/[^a-z0-9]/gi, '_').toLowerCase();
+      if (!safeName || safeName === '___') safeName = 'champion_profile';
+      
+      const filePath = `profiles/${safeName}_${timestamp}_${randomStr}.jpg`;
 
       const { error: uploadError } = await supabase.storage
         .from('champions')

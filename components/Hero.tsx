@@ -69,7 +69,7 @@ const Hero: React.FC<HeroProps> = ({ onExplore, onJoin }) => {
             onClick={onJoin}
             className="w-full sm:w-auto px-10 md:px-14 py-3.5 md:py-4 glass text-white font-bold rounded-sm border border-white/10 hover:bg-white/10 transition-all uppercase tracking-widest text-[10px] md:text-xs"
           >
-            내 프로필 등록
+            AI 챔피언 프로필 등록
           </button>
         </motion.div>
       </motion.div>

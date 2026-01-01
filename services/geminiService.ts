@@ -19,10 +19,19 @@ export async function polishVision(name: string, dept: string, vision: string) {
     const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
     const response = await ai.models.generateContent({
       model: 'gemini-3-flash-preview',
-      contents: `사용자의 이름은 ${name}이고 소속은 ${dept}입니다. 이 사용자가 작성한 포부는 다음과 같습니다: "${vision}". 이 포부를 공공부문 리더의 품격이 느껴지는 전문적이고 세련된 문장으로 다듬어주세요. 결과는 반드시 한 문장의 평서문으로만 출력하세요.`,
+      contents: `[STRICT INSTRUCTION: NO CONVERSATIONAL FILLERS]
+      사용자의 이름: ${name}
+      소속: ${dept}
+      작성된 포부: "${vision}"
+      
+      작업: 위 포부를 공공부문 리더의 품격이 느껴지는 전문적이고 세련된 문장으로 다듬으세요.
+      조건:
+      1. 결과는 반드시 단 한 문장의 평서문으로만 출력할 것.
+      2. "제시해주신 내용을 바탕으로", "다음은 고도화된 문장입니다"와 같은 서론, 설명, 인사말을 절대 포함하지 말 것.
+      3. 오직 정제된 문장 본문만 출력할 것.`,
       config: { thinkingConfig: { thinkingBudget: 0 } }
     });
-    return response.text?.trim() || vision;
+    return response.text?.trim().replace(/^["']|["']$/g, '') || vision;
   } catch (error: any) {
     console.error("Polish Vision Error:", error);
     return vision;
@@ -36,15 +45,21 @@ export async function polishAchievement(name: string, dept: string, role: string
   try {
     const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
     const prompt = achievement && achievement.length > 5 
-      ? `${dept}의 ${role}인 ${name}님이 작성한 다음 업적 내용을 공공 AI 혁신 사례로서 가치가 돋보이도록 고도화해주세요: "${achievement}". '주도', '최적화', '대전환', '성과 창출'과 같은 전문 용어를 사용하여 매우 임팩트 있는 한 문장으로 재구성하세요.`
-      : `${dept}에서 ${role}로 활동하는 ${name} 챔피언이 수행했을 법한 구체적이고 혁신적인 공공 AI 업적(예: 인프라 구축, 서비스 최적화, 정책 수립 등)을 한 문장으로 전문성 있게 제안해주세요.`;
+      ? `[STRICT INSTRUCTION: OUTPUT ONLY THE RESULT]
+         ${dept}의 ${role}인 ${name}님이 작성한 업적: "${achievement}"
+         
+         작업: 위 내용을 공공 AI 혁신 사례로서 가치가 돋보이도록 '주도', '최적화', '성과 창출' 등의 전문 용어를 사용하여 임팩트 있는 한 문장으로 재구성하세요.
+         조건: 어떠한 설명이나 서론(예: "고도화한 문장입니다") 없이 오직 고도화된 본문 문장만 출력하세요.`
+      : `[STRICT INSTRUCTION: OUTPUT ONLY THE RESULT]
+         ${dept}에서 ${role}로 활동하는 ${name} 챔피언을 위한 혁신적인 공공 AI 업적(예: 인프라 구축, 서비스 최적화)을 한 문장으로 전문성 있게 제안해주세요.
+         조건: 서론이나 설명 없이 오직 생성된 문장 본문만 출력하세요.`;
 
     const response = await ai.models.generateContent({
       model: 'gemini-3-flash-preview',
       contents: prompt,
       config: { thinkingConfig: { thinkingBudget: 0 } }
     });
-    return response.text?.replace(/"/g, '').trim() || achievement;
+    return response.text?.trim().replace(/^["']|["']$/g, '') || achievement;
   } catch (error: any) {
     console.error("Polish Achievement Error:", error);
     return achievement;
