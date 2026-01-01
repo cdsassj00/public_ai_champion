@@ -41,11 +41,9 @@ const App: React.FC = () => {
     if (view !== 'HALL_OF_FAME') setSearchQuery('');
   }, [view]);
 
-  // 그리드에 표시될 전체 아이템 리스트 (랜덤 배치 포함)
   const gridItems = useMemo(() => {
     const query = searchQuery.toLowerCase().trim();
     
-    // 검색어가 있는 경우: 검색 결과만 표시 (랜덤 섞지 않음)
     if (query) {
       return champions
         .filter(c => 
@@ -56,25 +54,22 @@ const App: React.FC = () => {
         .map(c => ({ type: 'CHAMPION', data: c } as GridItem));
     }
 
-    // 검색어가 없는 경우: 실제 데이터 + 플레이스홀더 섞어서 표시
-    // 최소 42개(6열 기준 가득 찬 느낌)를 유지하며, 데이터가 많아지면 슬롯을 자동으로 더 늘림
+    const shuffledChampions = [...champions];
+    for (let i = shuffledChampions.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [shuffledChampions[i], shuffledChampions[j]] = [shuffledChampions[j], shuffledChampions[i]];
+    }
+
     const baseSlots = 42; 
-    const extraSlots = 12; // 실제 챔피언들 외에 항상 보여줄 여유 공간
+    const extraSlots = 12;
     const totalSlots = Math.max(baseSlots, champions.length + extraSlots); 
     
     const items: GridItem[] = [
-      ...champions.map(c => ({ type: 'CHAMPION', data: c } as GridItem)),
+      ...shuffledChampions.map(c => ({ type: 'CHAMPION', data: c } as GridItem)),
       ...Array.from({ length: totalSlots - champions.length }).map((_, i) => ({ type: 'PLACEHOLDER', id: `ph-${i}` } as GridItem))
     ];
 
-    // Fisher-Yates Shuffle 적용 (데이터와 빈 자리를 무작위로 섞음)
-    const shuffledItems = [...items];
-    for (let i = shuffledItems.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [shuffledItems[i], shuffledItems[j]] = [shuffledItems[j], shuffledItems[i]];
-    }
-
-    return shuffledItems;
+    return items;
   }, [champions, searchQuery]);
 
   const handleSelectChampion = async (champion: Champion) => {
@@ -106,18 +101,18 @@ const App: React.FC = () => {
           {view === 'HOME' && <Hero onExplore={() => setView('HALL_OF_FAME')} onJoin={() => setView('REGISTER')} />}
 
           {view === 'HALL_OF_FAME' && (
-            <div className="max-w-[1600px] mx-auto px-4 sm:px-10 py-12 md:py-24">
-              <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} className="mb-14 md:mb-20 text-center">
-                <span className="text-[10px] md:text-xs font-black tracking-[0.6em] text-yellow-500/60 uppercase block mb-4">Archive of Excellence</span>
-                <h2 className="text-3xl md:text-6xl font-light serif-title mb-8 tracking-tighter uppercase break-keep">공공 AI 챔피언 <span className="gold-text font-black">명예의 전당</span></h2>
+            <div className="max-w-[1600px] mx-auto px-3 sm:px-10 py-12 md:py-24">
+              <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} className="mb-10 md:mb-20 text-center px-4">
+                <span className="text-[9px] md:text-xs font-black tracking-[0.5em] text-yellow-500/60 uppercase block mb-3 md:mb-4">Archive of Excellence</span>
+                <h2 className="text-2xl md:text-6xl font-light serif-title mb-6 md:mb-8 tracking-tighter uppercase break-keep">공공 AI 챔피언 <span className="gold-text font-black">명예의 전당</span></h2>
                 
-                <div className="max-w-2xl mx-auto relative group px-4">
+                <div className="max-w-xl mx-auto relative group">
                   <div className="absolute -inset-1 bg-gradient-to-r from-yellow-500/20 via-transparent to-yellow-500/20 blur-xl opacity-0 group-focus-within:opacity-100 transition-opacity duration-700"></div>
                   <div className="relative flex items-center">
-                    <div className="absolute left-7 text-white/20 group-focus-within:text-yellow-500 transition-colors duration-300">
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                    <div className="absolute left-6 text-white/20 group-focus-within:text-yellow-500 transition-colors duration-300">
+                      <svg className="w-4 h-4 md:w-5 md:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
                     </div>
-                    <input type="text" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} placeholder="혁신가의 이름을 검색하여 기록을 확인하세요" className="w-full bg-white/[0.02] border border-white/10 pl-14 pr-14 py-5 rounded-full text-sm md:text-base font-light focus:outline-none focus:border-yellow-500/50 focus:bg-white/[0.05] transition-all backdrop-blur-3xl shadow-[0_0_50px_rgba(0,0,0,0.5)]" />
+                    <input type="text" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} placeholder="챔피언 이름을 검색하세요" className="w-full bg-white/[0.03] border border-white/10 pl-12 pr-6 py-4 md:py-5 rounded-full text-xs md:text-base font-light focus:outline-none focus:border-yellow-500/50 transition-all backdrop-blur-3xl shadow-[0_0_40px_rgba(0,0,0,0.5)] placeholder:text-white/20" />
                   </div>
                 </div>
               </motion.div>
@@ -128,7 +123,7 @@ const App: React.FC = () => {
                   <span className="text-[8px] font-bold tracking-widest uppercase">데이터 아카이브 로딩 중...</span>
                 </div>
               ) : (
-                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-4 md:gap-6 lg:gap-8">
+                <div className="grid grid-cols-3 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-2 sm:gap-4 md:gap-6 lg:gap-8">
                   <AnimatePresence mode="popLayout">
                     {gridItems.map((item, index) => (
                       item.type === 'CHAMPION' ? (
@@ -206,21 +201,6 @@ const App: React.FC = () => {
                     </div>
                   ))}
                </div>
-
-               <motion.div 
-                initial={{ opacity: 0 }}
-                whileInView={{ opacity: 1 }}
-                className="mt-40 p-12 bg-white/[0.02] border border-white/5 text-center rounded-sm"
-               >
-                 <span className="text-[10px] font-black uppercase tracking-[0.5em] text-yellow-500/40 mb-6 block">대한민국 공공 AI의 미래</span>
-                 <h3 className="text-2xl md:text-3xl font-light serif-title mb-10 tracking-tight">"2030년까지 2만 명의 <span className="gold-text font-black">AI 챔피언</span>이 탄생합니다."</h3>
-                 <button 
-                  onClick={() => setView('REGISTER')}
-                  className="px-12 py-4 bg-yellow-500 text-black font-black uppercase tracking-[0.3em] text-[10px] hover:bg-yellow-400 transition-all shadow-xl"
-                 >
-                   기록 등록하기
-                 </button>
-               </motion.div>
             </div>
           )}
         </motion.main>
