@@ -20,6 +20,10 @@ export const SAMPLE_CHAMPIONS: Champion[] = [
   }
 ];
 
+export const POPULAR_TAGS = [
+  '#기획', '#인프라', '#행정자동화', '#데이터분석', '#민원챗봇', '#프로세스혁신', '#예측모델', '#LLM'
+];
+
 export const CERT_DETAILS = {
   [CertificationType.GREEN]: {
     title: 'AI 챔피언 그린 (Green)',
