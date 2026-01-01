@@ -80,6 +80,10 @@ const App: React.FC = () => {
     setSelectedChampion({ ...champion, viewCount: (champion.viewCount || 0) + 1 });
   };
 
+  const handleUpdateChampion = (updated: Champion) => {
+    setChampions(prev => prev.map(c => c.id === updated.id ? updated : c));
+  };
+
   const handleStartEdit = (champion: Champion) => {
     setEditingChampion(champion);
     setSelectedChampion(null);
@@ -209,6 +213,7 @@ const App: React.FC = () => {
       <ChampionModal 
         champion={selectedChampion} 
         onClose={() => setSelectedChampion(null)} 
+        onUpdate={handleUpdateChampion}
         onEdit={handleStartEdit}
         onDelete={handleDeleteChampion}
       />

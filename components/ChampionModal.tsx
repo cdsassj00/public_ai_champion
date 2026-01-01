@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Champion } from '../types';
 import { CERT_DETAILS } from '../constants';
@@ -14,9 +14,10 @@ interface ChampionModalProps {
   onClose: () => void;
   onEdit: (champion: Champion) => void;
   onDelete?: (id: string) => void;
+  onUpdate?: (champion: Champion) => void; // 데이터 갱신 알림 추가
 }
 
-const ChampionModal: React.FC<ChampionModalProps> = ({ champion: initialChampion, onClose, onEdit, onDelete }) => {
+const ChampionModal: React.FC<ChampionModalProps> = ({ champion: initialChampion, onClose, onEdit, onDelete, onUpdate }) => {
   const [champion, setChampion] = useState<Champion | null>(initialChampion);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isRefining, setIsRefining] = useState(false);
@@ -28,6 +29,9 @@ const ChampionModal: React.FC<ChampionModalProps> = ({ champion: initialChampion
   const [isAuthorized, setIsAuthorized] = useState(false);
   const [imageError, setImageError] = useState(false);
   const [refineStatus, setRefineStatus] = useState<string | null>(null);
+  
+  // 현재 챔피언 ID에 대해 자동 정제가 이미 수행되었는지 추적
+  const refinedIds = useRef<Set<string>>(new Set());
 
   const resetAuthFields = useCallback(() => {
     setAuthEmail('');
@@ -35,13 +39,15 @@ const ChampionModal: React.FC<ChampionModalProps> = ({ champion: initialChampion
   }, []);
 
   const autoRefine = useCallback(async (data: Champion) => {
-    if (isRefining) return;
+    // 이미 정제 중이거나, 이번 세션에서 이미 정제한 ID면 건너뜀
+    if (isRefining || refinedIds.current.has(data.id)) return;
     
+    // 정제가 필요한 조건인지 확인
     const needsVisionRefine = data.vision.length < 25;
     const needsAchievementRefine = !data.achievement || data.achievement.length < 20;
-    const needsImageRefine = !data.imageUrl.includes('profile_') && !data.imageUrl.includes('auto_profile');
     
-    if (!needsVisionRefine && !needsAchievementRefine && !needsImageRefine) return;
+    // 텍스트가 이미 충분히 길다면(고도화되었다면) 자동 실행 안 함
+    if (!needsVisionRefine && !needsAchievementRefine) return;
 
     setIsRefining(true);
     setRefineStatus("AI가 기록을 최적화 중...");
@@ -53,15 +59,23 @@ const ChampionModal: React.FC<ChampionModalProps> = ({ champion: initialChampion
       if (needsAchievementRefine) refinedAchievement = await polishAchievement(data.name, data.department, data.role, data.achievement || "");
       
       const updated = { ...data, vision: refinedVision, achievement: refinedAchievement };
+      
+      // DB 업데이트
       await apiService.updateChampion(updated);
+      
+      // 상태 업데이트 및 부모에게 알림
       setChampion(updated);
+      onUpdate?.(updated);
+      
+      // 처리 완료 목록에 추가
+      refinedIds.current.add(data.id);
     } catch (error) {
       console.error("Auto Refine Failed:", error);
     } finally {
       setIsRefining(false);
       setRefineStatus(null);
     }
-  }, [isRefining]);
+  }, [isRefining, onUpdate]);
 
   useEffect(() => {
     setChampion(initialChampion);
@@ -71,9 +85,14 @@ const ChampionModal: React.FC<ChampionModalProps> = ({ champion: initialChampion
       setShowDeleteConfirm(false);
       setImageError(false);
       resetAuthFields();
-      autoRefine(initialChampion);
+      
+      // 0.5초 뒤에 자동 정제 여부 판단 (UI가 먼저 뜨게 함)
+      const timer = setTimeout(() => {
+        autoRefine(initialChampion);
+      }, 500);
+      return () => clearTimeout(timer);
     }
-  }, [initialChampion, resetAuthFields, autoRefine]);
+  }, [initialChampion?.id]); // ID가 바뀔 때만 실행 (무한루프 방지)
 
   if (!champion) return null;
 
@@ -94,11 +113,9 @@ const ChampionModal: React.FC<ChampionModalProps> = ({ champion: initialChampion
     setIsRefining(true);
     setRefineStatus("전문 정장 프로필 사진 생성 및 문구 고도화 중...");
     try {
-      // 1. 텍스트 고도화
       const refinedVision = await polishVision(champion.name, champion.department, champion.vision);
       const refinedAchievement = await polishAchievement(champion.name, champion.department, champion.role, champion.achievement || "");
       
-      // 2. 이미지 변환
       let finalImageUrl = champion.imageUrl;
       try {
         const resp = await fetch(champion.imageUrl);
@@ -113,12 +130,13 @@ const ChampionModal: React.FC<ChampionModalProps> = ({ champion: initialChampion
         const aiResultBase64 = await transformPortrait(data, mime);
         finalImageUrl = await apiService.uploadImage(aiResultBase64, `manual_profile_${champion.name}`);
       } catch (imgErr) {
-        console.warn("Image transform failed during manual refine, skipping image part.");
+        console.warn("Image transform failed, skipping image part.");
       }
 
       const updated = { ...champion, vision: refinedVision, achievement: refinedAchievement, imageUrl: finalImageUrl };
       await apiService.updateChampion(updated);
       setChampion(updated);
+      onUpdate?.(updated);
       alert('AI가 전문 정장 프로필 사진 및 기록물 고도화를 완료했습니다.');
     } catch (error) {
       alert('AI 고도화 중 오류가 발생했습니다.');
