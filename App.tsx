@@ -15,9 +15,11 @@ import ChampionModal from './components/ChampionModal';
 import FilterBar from './components/FilterBar';
 
 type GridItem = { type: 'CHAMPION'; data: Champion } | { type: 'PLACEHOLDER'; id: string };
+type ViewMode = 'GRID' | 'LIST';
 
 const App: React.FC = () => {
   const [view, setView] = useState<ViewState>('HOME');
+  const [viewMode, setViewMode] = useState<ViewMode>('GRID');
   const [champions, setChampions] = useState<Champion[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
@@ -49,7 +51,6 @@ const App: React.FC = () => {
   const gridItems = useMemo(() => {
     const query = searchQuery.toLowerCase().trim();
     
-    // 1. 기초 필터링 (검색어 + 등급)
     let filtered = champions.filter(c => {
       const matchesSearch = !query || 
         c.name.toLowerCase().includes(query) || 
@@ -63,12 +64,10 @@ const App: React.FC = () => {
       return matchesSearch && matchesRank;
     });
 
-    // 2. 검색 중이거나 등급 선택 중이면 필터링된 결과만 표시
     if (query || selectedRank !== 'ALL') {
       return filtered.map(c => ({ type: 'CHAMPION', data: c } as GridItem));
     }
 
-    // 3. 홈 초기 화면: 랜덤 셔플 + 플레이스홀더
     const shuffledChampions = [...filtered];
     for (let i = shuffledChampions.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
@@ -127,7 +126,9 @@ const App: React.FC = () => {
                   selectedRank={selectedRank} 
                   setSelectedRank={setSelectedRank} 
                   searchQuery={searchQuery} 
-                  setSearchQuery={setSearchQuery} 
+                  setSearchQuery={setSearchQuery}
+                  viewMode={viewMode}
+                  setViewMode={setViewMode}
                 />
               </motion.div>
 
@@ -144,22 +145,30 @@ const App: React.FC = () => {
               ) : (
                 <motion.div 
                   layout
-                  className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-2 sm:gap-4 md:gap-6 lg:gap-8"
+                  className={viewMode === 'GRID' 
+                    ? "grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-2 sm:gap-4 md:gap-6 lg:gap-8"
+                    : "flex flex-col space-y-2 max-w-5xl mx-auto"
+                  }
                 >
                   <AnimatePresence mode="popLayout">
                     {gridItems.map((item, index) => (
                       <motion.div
                         key={item.type === 'CHAMPION' ? item.data.id : item.id}
                         layout
-                        initial={{ opacity: 0, scale: 0.9 }}
+                        initial={{ opacity: 0, scale: 0.95 }}
                         animate={{ opacity: 1, scale: 1 }}
-                        exit={{ opacity: 0, scale: 0.9 }}
-                        transition={{ duration: 0.3 }}
+                        exit={{ opacity: 0, scale: 0.95 }}
+                        transition={{ duration: 0.2 }}
                       >
                         {item.type === 'CHAMPION' ? (
-                          <ChampionCard champion={item.data} index={index} onClick={handleSelectChampion} />
+                          <ChampionCard 
+                            champion={item.data} 
+                            index={index} 
+                            onClick={handleSelectChampion} 
+                            viewMode={viewMode}
+                          />
                         ) : (
-                          <PlaceholderCard index={index} onClick={() => setView('REGISTER')} />
+                          viewMode === 'GRID' && <PlaceholderCard index={index} onClick={() => setView('REGISTER')} />
                         )}
                       </motion.div>
                     ))}
@@ -174,7 +183,6 @@ const App: React.FC = () => {
           
           {view === 'ABOUT' && (
             <div className="max-w-6xl mx-auto px-6 py-20">
-               {/* About content unchanged for brevity */}
                <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} className="text-center mb-24">
                   <h2 className="text-3xl md:text-5xl font-black serif-title mb-8 tracking-tighter uppercase leading-tight">
                     공공부문 AI 챔피언 <br/><span className="gold-text">역량인증 체계 가이드</span>
@@ -184,7 +192,6 @@ const App: React.FC = () => {
                     대상과 수준별로 4단계 교육과정(공공 AI 역량 트랙)과 연계된 인증 제도를 운영합니다.
                   </p>
                </motion.div>
-               {/* ... (rest of about view) */}
             </div>
           )}
         </motion.main>
