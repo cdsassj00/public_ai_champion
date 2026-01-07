@@ -40,7 +40,7 @@ export const apiService = {
     }
   },
 
-  uploadImage: async (base64Data: string, fileName: string): Promise<string> => {
+  uploadImage: async (base64Data: string, fileName: string, mimeType: string = 'image/jpeg'): Promise<string> => {
     try {
       if (!base64Data) throw new Error('데이터가 없습니다.');
       const base64Content = base64Data.includes(',') ? base64Data.split(',')[1] : base64Data;
@@ -50,24 +50,31 @@ export const apiService = {
       for (let i = 0; i < binaryString.length; i++) {
         bytes[i] = binaryString.charCodeAt(i);
       }
-      const blob = new Blob([bytes], { type: 'image/jpeg' });
+      const blob = new Blob([bytes], { type: mimeType });
 
       const timestamp = Date.now();
       const randomStr = Math.random().toString(36).substring(7);
       
-      // 개선: 한국어 이름이 포함되어도 안전한 파일명 생성 (Base64 인코딩 또는 단순화)
-      // 영문/숫자 외에는 _ 로 치환하되, 빈 문자열이 되지 않도록 보장
+      // 파일 확장자 추출 로직 개선 (subtype/type+suffix 구조 대응)
+      let extension = 'jpg';
+      const mimeSubtype = mimeType.split('/')[1];
+      if (mimeSubtype) {
+        extension = mimeSubtype.split('+')[0].split(';')[0];
+        if (extension === 'jpeg') extension = 'jpg';
+        if (extension === 'x-icon') extension = 'ico';
+      }
+      
       let safeName = fileName.replace(/[^a-z0-9]/gi, '_').toLowerCase();
       if (!safeName || safeName === '___') safeName = 'champion_profile';
       
-      const filePath = `profiles/${safeName}_${timestamp}_${randomStr}.jpg`;
+      const filePath = `profiles/${safeName}_${timestamp}_${randomStr}.${extension}`;
 
       const { error: uploadError } = await supabase.storage
         .from('champions')
         .upload(filePath, blob, {
           cacheControl: '3600',
           upsert: true,
-          contentType: 'image/jpeg'
+          contentType: mimeType
         });
 
       if (uploadError) throw uploadError;

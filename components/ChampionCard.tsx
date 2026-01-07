@@ -60,18 +60,21 @@ const ChampionCard: React.FC<ChampionCardProps> = ({ champion, index, onClick, v
         scale: 1,
         transition: { delay: (index % 12) * 0.05, duration: 1, ease: [0.16, 1, 0.3, 1] }
       }}
-      whileHover={{ y: -10, transition: { duration: 0.5, ease: "easeOut" } }}
+      whileHover={{ y: -8, transition: { duration: 0.5, ease: "easeOut" } }}
       onClick={() => onClick(champion)}
       className={`group relative aspect-[3/4] md:aspect-[4/5] bg-neutral-950 overflow-hidden cursor-pointer rounded-sm border border-white/[0.05] transition-all duration-700 hover:border-white/20 shadow-2xl`}
     >
-      {/* 1. Base Image - "Silver-Contrast" Grayscale */}
-      <div className="absolute inset-0 z-0 overflow-hidden">
+      {/* 1. Backdrop Glow - Creates depth behind the subject */}
+      <div className={`absolute inset-0 z-0 opacity-10 blur-3xl transition-opacity duration-1000 group-hover:opacity-20 ${details.accent}`}></div>
+
+      {/* 2. Photo - More visible and vibrant */}
+      <div className="absolute inset-0 z-10 overflow-hidden bg-black">
         {!imageError ? (
           <img 
             src={displayImage} 
             alt={champion.name}
             onError={() => setImageError(true)}
-            className="w-full h-full object-cover grayscale contrast-[1.2] brightness-[1.05] saturate-0 group-hover:grayscale-0 group-hover:brightness-100 group-hover:contrast-100 transition-all duration-1000 scale-[1.01] group-hover:scale-110"
+            className="w-full h-full object-cover grayscale-[0.1] contrast-[1.05] brightness-[0.85] group-hover:grayscale-0 group-hover:brightness-[0.95] group-hover:contrast-100 transition-all duration-1000 scale-[1.02] group-hover:scale-110"
           />
         ) : (
           <div className="w-full h-full flex items-center justify-center bg-neutral-900">
@@ -80,48 +83,59 @@ const ChampionCard: React.FC<ChampionCardProps> = ({ champion, index, onClick, v
         )}
       </div>
 
-      {/* 2. Asymmetric Editorial Scrim */}
-      <div className="absolute inset-0 z-10 bg-gradient-to-t from-black via-black/30 to-transparent opacity-90 group-hover:opacity-50 transition-opacity duration-1000"></div>
+      {/* 3. Artistic Feathered Masking - Sophisticated bottom scrim */}
+      <div className="absolute inset-0 z-20 bg-gradient-to-t from-black via-black/40 to-transparent opacity-90 transition-all duration-700 group-hover:opacity-100"></div>
       
-      {/* 3. Micro Film Texture */}
-      <div className="absolute inset-0 z-20 pointer-events-none opacity-[0.05] bg-[url('https://www.transparenttextures.com/patterns/stardust.png')] mix-blend-overlay"></div>
+      {/* 4. Film Grain Texture for Archive feel */}
+      <div className="absolute inset-0 z-30 pointer-events-none opacity-[0.03] bg-[url('https://www.transparenttextures.com/patterns/stardust.png')] mix-blend-overlay"></div>
 
-      {/* 4. Minimal Rank Indicator - Distinct Color Points */}
-      <div className="absolute top-0 left-0 right-0 p-3 md:p-5 z-40 flex justify-between items-start">
-        <div className="flex flex-col gap-1">
-          <div className={`w-5 h-[2px] md:w-6 md:h-[3px] ${details.accent} shadow-[0_0_15px_currentColor] group-hover:w-16 transition-all duration-700 ease-in-out`}></div>
-          <span className={`text-[7px] md:text-[9px] font-black tracking-[0.2em] md:tracking-[0.4em] uppercase ${details.color} opacity-90 group-hover:opacity-100 drop-shadow-md`}>
-            {details.icon} {champion.certType}
-          </span>
+      {/* 5. Rank Badge - Sharp & Professional */}
+      <div className="absolute top-0 left-0 right-0 p-4 md:p-5 lg:p-6 z-40 flex justify-between items-start">
+        <div className="flex flex-col gap-1.5">
+          <div className={`px-2.5 py-1 rounded-sm ${details.rankBg} border ${details.border} backdrop-blur-md shadow-2xl`}>
+             <span className={`text-[8px] md:text-[9px] font-black tracking-[0.2em] md:tracking-[0.4em] uppercase ${details.color}`}>
+                {details.icon} {champion.certType}
+             </span>
+          </div>
         </div>
         {isOwner && (
-          <div className="px-1.5 py-0.5 text-[5px] md:text-[6px] font-black bg-yellow-500 text-black rounded-sm shadow-xl tracking-tight uppercase">Owner</div>
+          <div className="px-2 py-0.5 text-[6px] md:text-[7px] font-black bg-yellow-500 text-black rounded-sm shadow-xl tracking-tight uppercase">Owner</div>
         )}
       </div>
 
-      {/* 5. Editorial Content - Name size optimized for Mobile */}
-      <div className="absolute inset-x-0 bottom-0 p-4 md:p-8 lg:p-10 z-40">
-        <div className="relative transform group-hover:translate-x-1 transition-transform duration-700 ease-out">
+      {/* 6. Content Block - Optimized Typography */}
+      <div className="absolute inset-x-0 bottom-0 p-5 md:p-7 lg:p-8 z-40">
+        <div className="relative flex flex-col transform transition-transform duration-700 ease-out">
           
-          <div className="mb-1 md:mb-2 flex items-center gap-1.5">
-            <div className={`w-1 h-1 rounded-full ${details.accent} opacity-90 group-hover:scale-150 transition-transform shadow-[0_0_8px_currentColor]`}></div>
-            <p className="text-[8px] md:text-[11px] text-white/60 font-bold tracking-tight group-hover:text-white transition-colors duration-500 truncate uppercase">
-              {champion.role}
+          {/* Organization - Golden Accent */}
+          <div className="mb-1.5 md:mb-2">
+            <p className="text-[9px] md:text-[10px] lg:text-[11px] text-yellow-500/80 font-black tracking-widest group-hover:text-yellow-400 transition-colors duration-500 truncate uppercase">
+              {champion.department}
             </p>
           </div>
           
-          <div className="flex items-end gap-2 md:gap-3">
-             <h3 className="text-xl md:text-3xl lg:text-5xl font-black serif-title text-white tracking-tighter leading-none group-hover:text-yellow-500 transition-colors duration-500">
+          {/* Name - Reduced Size significantly for Desktop (approx 50% smaller than previous) */}
+          <div className="flex items-center gap-2 md:gap-3 mb-1.5 md:mb-2.5">
+             <h3 className="text-lg md:text-xl lg:text-2xl font-black serif-title text-white tracking-tighter leading-none transition-all duration-500">
               {champion.name}
             </h3>
-            <div className={`h-1 md:h-2 w-4 md:w-8 mb-0.5 md:mb-1.5 ${details.accent} opacity-50 group-hover:opacity-100 group-hover:w-12 transition-all duration-1000 shadow-[0_0_10px_currentColor]`}></div>
+            <div className={`h-[1px] w-3 md:w-5 ${details.accent} opacity-60 group-hover:w-8 transition-all duration-1000 shadow-[0_0_8px_currentColor]`}></div>
           </div>
+
+          {/* Role - Subtle & Clean */}
+          <div className="flex items-center gap-2">
+            <span className={`w-1 h-1 rounded-full ${details.accent} opacity-40`}></span>
+            <p className="text-[8px] md:text-[9px] lg:text-[10px] text-white/40 font-medium tracking-tight group-hover:text-white/70 transition-colors duration-500 truncate uppercase">
+              {champion.role}
+            </p>
+          </div>
+
         </div>
       </div>
 
-      {/* Decorative Corners */}
-      <div className="absolute top-2 left-2 w-2 h-2 border-t border-l border-white/10 pointer-events-none group-hover:border-white/30 transition-colors"></div>
-      <div className="absolute bottom-2 right-2 w-2 h-2 border-b border-r border-white/10 pointer-events-none group-hover:border-white/30 transition-colors"></div>
+      {/* Decorative Corner Highlights */}
+      <div className="absolute top-2 left-2 w-3 h-3 border-t border-l border-white/10 pointer-events-none transition-colors group-hover:border-white/30"></div>
+      <div className="absolute bottom-2 right-2 w-3 h-3 border-b border-r border-white/10 pointer-events-none transition-colors group-hover:border-white/30"></div>
     </motion.div>
   );
 };

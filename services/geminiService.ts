@@ -81,13 +81,13 @@ export async function transformPortrait(base64Image: string, mimeType: string) {
             text: `[STRICT TASK: Professional Business Profile Photo]
             
             1. OBJECTIVE: Create a highly realistic, standardized corporate headshot suitable for a formal Hall of Fame.
-            2. FACE PRESERVATION: The subject's facial features, identity, and expression must remain 100% AUTHENTIC. Do not beautify excessively or change basic features.
+            2. FACE PRESERVATION: The subject's facial features, identity, and expression must remain 100% AUTHENTIC. Maintain the original bone structure and unique traits without excessive beautification.
             3. ATTIRE: STRICT MANDATORY - Replace all current clothing with a crisp, high-quality professional business suit (Dark Navy, Charcoal, or Black). Include a perfectly ironed white dress shirt and a professional silk tie with a clean knot.
-            4. PHOTOGRAPHY STYLE: Professional studio portrait photography. High-end DSLR, 85mm lens style, sharp focus on the face, clear and bright skin tones.
-            5. LIGHTING: Balanced three-point studio lighting. Soft shadows, professional highlight on the face.
-            6. COMPOSITION: Standard profile photo framing. Half-body (chest up). Ensure generous headroom at the top.
+            4. PHOTOGRAPHY STYLE: Professional studio portrait photography. High-end DSLR style with natural skin textures. Avoid over-smoothing or plastic looks.
+            5. LIGHTING: Balanced three-point studio lighting. Soft shadows, professional highlight on the face that feels natural.
+            6. COMPOSITION & FRAMING: Balanced medium shot (waist-up or chest-up). AVOID CLOSE-UPS. Ensure the face does not occupy more than 30% of the frame. Provide generous headroom and side space to create a spacious, professional editorial feel.
             7. BACKGROUND: Clean, professional, and slightly out-of-focus background (Modern office interior or solid professional studio gray).
-            8. FORBIDDEN: No text, no logos, no filters, no artistic painting styles. Must look like a REAL PHOTOGRAPH.`,
+            8. FORBIDDEN: No text, no logos, no filters, no artistic painting styles. The result must look like a real, high-quality photograph taken by a professional photographer.`,
           },
         ],
       },

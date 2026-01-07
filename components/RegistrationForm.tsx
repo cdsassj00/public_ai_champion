@@ -27,6 +27,7 @@ const RegistrationForm: React.FC<RegistrationFormProps> = ({ onSuccess, editData
   });
 
   const [localBase64, setLocalBase64] = useState<string | null>(null);
+  const [localMimeType, setLocalMimeType] = useState<string>('image/jpeg');
   const [isAiApplied, setIsAiApplied] = useState(false);
   const [imageLoadError, setImageLoadError] = useState(false);
 
@@ -57,10 +58,10 @@ const RegistrationForm: React.FC<RegistrationFormProps> = ({ onSuccess, editData
   
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const getBase64FromUrl = async (url: string): Promise<string> => {
+  const getBase64FromUrl = async (url: string): Promise<{ data: string; mime: string }> => {
     return new Promise((resolve, reject) => {
       const img = new Image();
-      img.crossOrigin = 'anonymous'; // FIX: CORS Robustness
+      img.crossOrigin = 'anonymous'; 
       const safeUrl = url.includes('?') ? `${url}&t=${Date.now()}` : `${url}?t=${Date.now()}`;
       img.src = safeUrl;
       img.onload = () => {
@@ -70,20 +71,21 @@ const RegistrationForm: React.FC<RegistrationFormProps> = ({ onSuccess, editData
         const ctx = canvas.getContext('2d');
         if (!ctx) return reject('Canvas context error');
         ctx.drawImage(img, 0, 0);
-        resolve(canvas.toDataURL('image/jpeg', 0.9));
+        const dataUrl = canvas.toDataURL('image/jpeg', 0.9);
+        resolve({ data: dataUrl, mime: 'image/jpeg' });
       };
       img.onerror = () => reject('이미지를 분석할 수 없습니다. 다시 업로드한 뒤 시도해주세요.');
     });
   };
 
-  const optimizeImage = (base64Str: string): Promise<string> => {
+  const optimizeImage = (base64Str: string, originalMime: string): Promise<{ data: string; mime: string }> => {
     return new Promise((resolve) => {
       const img = new Image();
       img.src = base64Str;
       img.onload = () => {
         const canvas = document.createElement('canvas');
         const MAX_WIDTH = 1200;
-        const MAX_HEIGHT = 1600; // Profile optimized
+        const MAX_HEIGHT = 1600; 
         let width = img.width;
         let height = img.height;
         if (width > height) {
@@ -95,16 +97,31 @@ const RegistrationForm: React.FC<RegistrationFormProps> = ({ onSuccess, editData
         const ctx = canvas.getContext('2d');
         if (ctx) {
           ctx.drawImage(img, 0, 0, width, height);
-          resolve(canvas.toDataURL('image/jpeg', 0.95));
-        } else { resolve(base64Str); }
+          const optimized = canvas.toDataURL('image/jpeg', 0.92);
+          resolve({ data: optimized, mime: 'image/jpeg' });
+        } else { 
+          resolve({ data: base64Str, mime: originalMime }); 
+        }
       };
-      img.onerror = () => resolve(base64Str);
+      img.onerror = () => resolve({ data: base64Str, mime: originalMime });
     });
   };
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+
+    const allowedTypes = [
+      'image/jpeg', 'image/jpg', 'image/png', 'image/webp', 
+      'image/heic', 'image/heif', 'image/avif', 'image/bmp', 'image/tiff'
+    ];
+    
+    const isHeic = file.name.toLowerCase().endsWith('.heic') || file.name.toLowerCase().endsWith('.heif');
+    
+    if (file.type && !allowedTypes.includes(file.type) && !isHeic) {
+      alert('지원되지 않는 파일 형식입니다. (JPG, PNG, WEBP, HEIC, AVIF, BMP, TIFF 지원)');
+      return;
+    }
 
     setIsOptimizing(true);
     setImageLoadError(false);
@@ -113,11 +130,12 @@ const RegistrationForm: React.FC<RegistrationFormProps> = ({ onSuccess, editData
     reader.onloadend = async () => {
       try {
         const rawBase64 = reader.result as string;
-        const optimizedBase64 = await optimizeImage(rawBase64);
+        const { data: optimizedBase64, mime } = await optimizeImage(rawBase64, file.type || (isHeic ? 'image/heic' : 'image/jpeg'));
         setLocalBase64(optimizedBase64);
+        setLocalMimeType(mime);
         setIsAiApplied(false); 
         setIsUploading(true);
-        const publicUrl = await apiService.uploadImage(optimizedBase64, `raw_${formData.name || 'user'}`);
+        const publicUrl = await apiService.uploadImage(optimizedBase64, `raw_${formData.name || 'user'}`, mime);
         setFormData(prev => ({ ...prev, imageUrl: publicUrl }));
       } catch (error) {
         alert('이미지 업로드에 실패했습니다.');
@@ -132,12 +150,15 @@ const RegistrationForm: React.FC<RegistrationFormProps> = ({ onSuccess, editData
 
   const handleArtisticTransform = async () => {
     let base64ToUse = localBase64;
+    let mimeToUse = localMimeType;
     setIsTransforming(true);
     setImageLoadError(false);
     try {
       if (!base64ToUse && formData.imageUrl) {
         setAiStatus("기존 이미지를 분석 중...");
-        base64ToUse = await getBase64FromUrl(formData.imageUrl);
+        const result = await getBase64FromUrl(formData.imageUrl);
+        base64ToUse = result.data;
+        mimeToUse = result.mime;
       }
       
       if (!base64ToUse) {
@@ -146,13 +167,13 @@ const RegistrationForm: React.FC<RegistrationFormProps> = ({ onSuccess, editData
       
       setAiStatus("Gemini가 전문 정장 프로필로 변환 중...");
       const [header, data] = base64ToUse.split(',');
-      const mime = header.match(/:(.*?);/)?.[1] || 'image/jpeg';
-      const aiResultBase64 = await transformPortrait(data, mime);
+      const aiResultBase64 = await transformPortrait(data, mimeToUse);
       
       setLocalBase64(aiResultBase64);
+      setLocalMimeType('image/png'); 
       setIsAiApplied(true);
       setIsUploading(true);
-      const storageUrl = await apiService.uploadImage(aiResultBase64, `ai_profile_${formData.name || 'champion'}`);
+      const storageUrl = await apiService.uploadImage(aiResultBase64, `ai_profile_${formData.name || 'champion'}`, 'image/png');
       setFormData(prev => ({ ...prev, imageUrl: storageUrl }));
       alert('전문 정장 프로필 사진 생성이 완료되었습니다.');
     } catch (error: any) {
@@ -254,13 +275,23 @@ const RegistrationForm: React.FC<RegistrationFormProps> = ({ onSuccess, editData
                 />
               </>
             ) : (
-              <div className="text-center p-10 group-hover:opacity-100 transition-all duration-500">
+              <div className="text-center p-6 md:p-10 group-hover:opacity-100 transition-all duration-500">
                 <div className={`w-16 h-16 border-2 border-dashed ${imageLoadError ? 'border-red-500' : 'border-white/40'} rounded-full flex items-center justify-center mx-auto mb-6`}>
                   <span className={`text-3xl ${imageLoadError ? 'text-red-500' : 'text-white'}`}>{imageLoadError ? '!' : '+'}</span>
                 </div>
-                <p className={`text-[10px] font-black uppercase tracking-widest ${imageLoadError ? 'text-red-500' : 'text-white'}`}>
+                <p className={`text-[11px] font-black uppercase tracking-widest ${imageLoadError ? 'text-red-500' : 'text-white'} mb-6`}>
                   {imageLoadError ? '이미지 분석 실패: 다시 업로드' : '사진 업로드'}
                 </p>
+                
+                {/* 확장자 안내 구역 개선 */}
+                <div className="space-y-3">
+                   <span className="text-[9px] font-black tracking-[0.3em] text-white/30 uppercase block">Supported Formats</span>
+                   <div className="flex flex-wrap justify-center gap-1.5 opacity-60 group-hover:opacity-100 transition-opacity">
+                      {['JPG', 'PNG', 'WEBP', 'HEIC', 'AVIF', 'BMP', 'TIFF'].map(ext => (
+                        <span key={ext} className="px-2 py-0.5 border border-white/10 bg-white/5 text-[8px] font-bold text-white/40 rounded-sm">{ext}</span>
+                      ))}
+                   </div>
+                </div>
               </div>
             )}
             <input 
@@ -268,7 +299,7 @@ const RegistrationForm: React.FC<RegistrationFormProps> = ({ onSuccess, editData
               ref={fileInputRef} 
               onChange={handleImageUpload} 
               className="absolute inset-0 opacity-0 cursor-pointer z-30" 
-              accept="image/*" 
+              accept=".jpeg,.jpg,.png,.webp,.heic,.heif,.avif,.bmp,.tiff" 
               disabled={isAnyLoading} 
             />
           </div>
