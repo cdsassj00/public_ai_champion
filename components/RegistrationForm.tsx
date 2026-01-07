@@ -60,7 +60,7 @@ const RegistrationForm: React.FC<RegistrationFormProps> = ({ onSuccess, editData
   const getBase64FromUrl = async (url: string): Promise<string> => {
     return new Promise((resolve, reject) => {
       const img = new Image();
-      img.crossOrigin = 'anonymous';
+      img.crossOrigin = 'anonymous'; // FIX: CORS Robustness
       const safeUrl = url.includes('?') ? `${url}&t=${Date.now()}` : `${url}?t=${Date.now()}`;
       img.src = safeUrl;
       img.onload = () => {
@@ -72,7 +72,7 @@ const RegistrationForm: React.FC<RegistrationFormProps> = ({ onSuccess, editData
         ctx.drawImage(img, 0, 0);
         resolve(canvas.toDataURL('image/jpeg', 0.9));
       };
-      img.onerror = () => reject('이미지를 불러올 수 없습니다. 다시 업로드해주세요.');
+      img.onerror = () => reject('이미지를 분석할 수 없습니다. 다시 업로드한 뒤 시도해주세요.');
     });
   };
 
@@ -83,7 +83,7 @@ const RegistrationForm: React.FC<RegistrationFormProps> = ({ onSuccess, editData
       img.onload = () => {
         const canvas = document.createElement('canvas');
         const MAX_WIDTH = 1200;
-        const MAX_HEIGHT = 1200;
+        const MAX_HEIGHT = 1600; // Profile optimized
         let width = img.width;
         let height = img.height;
         if (width > height) {
@@ -95,7 +95,7 @@ const RegistrationForm: React.FC<RegistrationFormProps> = ({ onSuccess, editData
         const ctx = canvas.getContext('2d');
         if (ctx) {
           ctx.drawImage(img, 0, 0, width, height);
-          resolve(canvas.toDataURL('image/jpeg', 0.9));
+          resolve(canvas.toDataURL('image/jpeg', 0.95));
         } else { resolve(base64Str); }
       };
       img.onerror = () => resolve(base64Str);
@@ -133,6 +133,7 @@ const RegistrationForm: React.FC<RegistrationFormProps> = ({ onSuccess, editData
   const handleArtisticTransform = async () => {
     let base64ToUse = localBase64;
     setIsTransforming(true);
+    setImageLoadError(false);
     try {
       if (!base64ToUse && formData.imageUrl) {
         setAiStatus("기존 이미지를 분석 중...");
@@ -140,9 +141,7 @@ const RegistrationForm: React.FC<RegistrationFormProps> = ({ onSuccess, editData
       }
       
       if (!base64ToUse) {
-        alert('이미지가 깨졌거나 존재하지 않습니다. 다시 업로드한 뒤 변환해주세요.');
-        setImageLoadError(true);
-        return;
+        throw new Error('이미지를 가져올 수 없습니다.');
       }
       
       setAiStatus("Gemini가 전문 정장 프로필로 변환 중...");
@@ -158,7 +157,7 @@ const RegistrationForm: React.FC<RegistrationFormProps> = ({ onSuccess, editData
       alert('전문 정장 프로필 사진 생성이 완료되었습니다.');
     } catch (error: any) {
       console.error(error);
-      alert('AI 변환에 실패했습니다. 사진을 다시 업로드한 후 시도해주세요.');
+      alert('이미지 분석 또는 AI 변환에 실패했습니다. 사진을 다시 업로드한 후 시도해 주세요.');
       setImageLoadError(true);
     } finally { 
       setIsTransforming(false); 
@@ -179,8 +178,6 @@ const RegistrationForm: React.FC<RegistrationFormProps> = ({ onSuccess, editData
     let finalAchievement = formData.achievement;
 
     try {
-      // 사진 자동 변환 로직 제거됨 (버튼을 눌렀을 때만 변환됨)
-
       setAiStatus("포부를 품격 있게 정제 중...");
       finalVision = await polishVision(formData.name, formData.department, finalVision);
 
@@ -262,7 +259,7 @@ const RegistrationForm: React.FC<RegistrationFormProps> = ({ onSuccess, editData
                   <span className={`text-3xl ${imageLoadError ? 'text-red-500' : 'text-white'}`}>{imageLoadError ? '!' : '+'}</span>
                 </div>
                 <p className={`text-[10px] font-black uppercase tracking-widest ${imageLoadError ? 'text-red-500' : 'text-white'}`}>
-                  {imageLoadError ? '이미지 로드 실패: 클릭하여 다시 업로드' : '사진 업로드'}
+                  {imageLoadError ? '이미지 분석 실패: 다시 업로드' : '사진 업로드'}
                 </p>
               </div>
             )}
@@ -326,17 +323,17 @@ const RegistrationForm: React.FC<RegistrationFormProps> = ({ onSuccess, editData
           <div className="flex flex-col space-y-4 pt-4 border-t border-white/5">
             <div className="flex items-center justify-between">
               <label className="text-[11px] font-black uppercase tracking-widest text-white/70">AI 챔피언으로서 포부</label>
-              <span className="text-[9px] text-yellow-500/40 uppercase font-black">AI 자동 완성 적용</span>
+              <span className="text-[9px] text-yellow-500/40 uppercase font-black">Enter로 줄바꿈 가능</span>
             </div>
-            <textarea required rows={3} value={formData.vision} onChange={e => setFormData({...formData, vision: e.target.value})} className="bg-white/[0.04] border border-white/10 p-5 text-sm font-medium italic text-white focus:border-yellow-500 outline-none leading-relaxed transition-all" placeholder="생각나는 대로 입력하세요. AI가 멋지게 다듬어드립니다." />
+            <textarea required rows={4} value={formData.vision} onChange={e => setFormData({...formData, vision: e.target.value})} className="bg-white/[0.04] border border-white/10 p-5 text-sm font-medium italic text-white focus:border-yellow-500 outline-none leading-relaxed transition-all" placeholder="포부를 입력하세요. AI가 멋지게 다듬어 드립니다." />
           </div>
 
           <div className="flex flex-col space-y-4">
             <div className="flex items-center justify-between">
               <label className="text-[11px] font-black uppercase tracking-widest text-white/70">주요 업적 및 프로젝트</label>
-              <span className="text-[9px] text-yellow-500/40 uppercase font-black">AI 고도화 적용</span>
+              <span className="text-[9px] text-yellow-500/40 uppercase font-black">Enter로 줄바꿈 가능</span>
             </div>
-            <textarea rows={3} value={formData.achievement} onChange={e => setFormData({...formData, achievement: e.target.value})} className="bg-white/[0.04] border border-white/10 p-5 text-sm font-medium text-white focus:border-yellow-500 outline-none leading-relaxed transition-all" placeholder="업적을 입력하시면 AI가 더욱 임팩트 있게 고도화해드립니다." />
+            <textarea rows={6} value={formData.achievement} onChange={e => setFormData({...formData, achievement: e.target.value})} className="bg-white/[0.04] border border-white/10 p-5 text-sm font-medium text-white focus:border-yellow-500 outline-none leading-relaxed transition-all" placeholder="업적을 상세히 입력하세요. AI가 임팩트 있게 고도화해 드립니다." />
           </div>
 
           <div className="pt-8">

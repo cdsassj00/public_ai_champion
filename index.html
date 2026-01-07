@@ -6,33 +6,20 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
     
-    <!-- 브라우저 탭 및 검색 결과 제목 -->
     <title>공공 AI 챔피언 명예의 전당</title>
     <meta name="title" content="공공 AI 챔피언 명예의 전당">
     <meta name="description" content="대한민국 공공부문 디지털 혁신을 주도하는 AI 챔피언들을 위한 고품격 명예의 전당. 당신의 업적을 기록하고 공유하세요.">
     <meta name="keywords" content="공공 AI, AI 챔피언, 명예의 전당, 행정안전부, 디지털정부, AI 역량인증">
     <meta name="author" content="공공 AI 챔피언 운영위원회">
 
-    <!-- Open Graph (카카오톡, 페이스북, 공유 미리보기) -->
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://www.aichampion.site">
     <meta property="og:title" content="공공 AI 챔피언 명예의 전당">
     <meta property="og:description" content="대한민국 공공부문 AI 혁신 리더들의 기록. 당신의 가치를 증명하세요.">
-    <!-- 이미지 경로 뒤에 ?v=2를 추가하여 플랫폼들이 새 이미지로 인식하도록 강제 -->
     <meta property="og:image" content="https://images.unsplash.com/photo-1569000971952-6d0b63581174?q=80&w=1200&h=630&auto=format&fit=crop&v=2">
-    <meta property="og:image:width" content="1200">
-    <meta property="og:image:height" content="630">
     <meta property="og:site_name" content="공공 AI 챔피언 명예의 전당">
     <meta property="og:locale" content="ko_KR">
 
-    <!-- Twitter -->
-    <meta property="twitter:card" content="summary_large_image">
-    <meta property="twitter:url" content="https://www.aichampion.site">
-    <meta property="twitter:title" content="공공 AI 챔피언 명예의 전당">
-    <meta property="twitter:description" content="대한민국 공공부문 AI 혁신 리더들의 기록소.">
-    <meta property="twitter:image" content="https://images.unsplash.com/photo-1569000971952-6d0b63581174?q=80&w=1200&h=630&auto=format&fit=crop&v=2">
-
-    <!-- iOS & Android Web App -->
     <meta name="apple-mobile-web-app-title" content="공공 AI 챔피언">
     <meta name="theme-color" content="#000000">
 
@@ -45,6 +32,7 @@
             color: #ffffff;
             overflow-x: hidden;
             margin: 0;
+            letter-spacing: -0.01em;
         }
         .serif-title {
             font-family: 'Noto Serif KR', serif;
@@ -56,16 +44,22 @@
         }
         .glass {
             background: rgba(255, 255, 255, 0.02);
-            backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(30px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
         }
-        canvas {
-            display: block;
-            position: fixed;
-            top: 0;
-            left: 0;
-            z-index: -1;
-            pointer-events: none;
+        /* Custom Scrollbar for the Elite Look */
+        ::-webkit-scrollbar {
+            width: 4px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #000;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #bf953f;
         }
     </style>
 <script type="importmap">

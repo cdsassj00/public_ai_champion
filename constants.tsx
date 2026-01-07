@@ -27,7 +27,7 @@ export const POPULAR_TAGS = [
 export const CERT_DETAILS = {
   [CertificationType.GREEN]: {
     title: 'AI 챔피언 그린 (Green)',
-    label: '트랙2: AI 융합 실무자',
+    label: 'AI 융합 실무자',
     desc: '노코드 기반의 AI 실무 적용 역량 인증',
     criteria: [
       '생성형 AI를 활용한 행정 문서 및 홍보물 기획',
@@ -35,17 +35,17 @@ export const CERT_DETAILS = {
       '민원 매뉴얼 기반 응답형 챗봇 서비스 구현'
     ],
     color: 'text-emerald-400',
-    glow: 'shadow-[0_0_30px_rgba(16,185,129,0.25)]',
-    border: 'border-emerald-500/30',
-    bg: 'from-emerald-950/40 to-black',
+    glow: 'shadow-[0_0_50px_rgba(52,211,153,0.4)]',
+    border: 'border-emerald-500/60',
+    bg: 'from-emerald-900/40 to-black',
     accent: 'bg-emerald-400',
-    rankBg: 'bg-emerald-950/80',
+    rankBg: 'bg-emerald-950/90',
     textShadow: 'shadow-emerald-500/50',
     icon: '◈'
   },
   [CertificationType.BLUE]: {
     title: 'AI 챔피언 블루 (Blue)',
-    label: '트랙3: AI 전환 실행자',
+    label: 'AI 전환 실행자',
     desc: '개발·모델링 기반의 AI 실행 역량 인증',
     criteria: [
       '머신러닝 알고리즘 기반 에너지 사용량 예측 모델 설계',
@@ -53,17 +53,17 @@ export const CERT_DETAILS = {
       '데이터 분석 및 모델링을 통한 공공 서비스 최적화'
     ],
     color: 'text-blue-400',
-    glow: 'shadow-[0_0_30px_rgba(59,130,246,0.25)]',
-    border: 'border-blue-500/30',
-    bg: 'from-blue-950/40 to-black',
+    glow: 'shadow-[0_0_50px_rgba(59,130,246,0.4)]',
+    border: 'border-blue-500/60',
+    bg: 'from-blue-900/40 to-black',
     accent: 'bg-blue-400',
-    rankBg: 'bg-blue-950/80',
+    rankBg: 'bg-blue-950/90',
     textShadow: 'shadow-blue-500/50',
     icon: '✦'
   },
   [CertificationType.BLACK]: {
     title: 'AI 챔피언 블랙 (Black)',
-    label: '트랙4: AI 마스터 (예정)',
+    label: 'AI 마스터 리더',
     desc: '고급 AI 기술 이해 및 혁신 리딩 전문가',
     criteria: [
       '범정부 AI 인프라 및 정책 수립 리딩',
@@ -71,11 +71,11 @@ export const CERT_DETAILS = {
       '2026년 도입 예정인 최고 등급 마스터 과정'
     ],
     color: 'text-yellow-500',
-    glow: 'shadow-[0_0_40px_rgba(234,179,8,0.4)]',
-    border: 'border-yellow-600/50',
-    bg: 'from-yellow-950/40 to-black',
+    glow: 'shadow-[0_0_60px_rgba(234,179,8,0.5)]',
+    border: 'border-yellow-600/80',
+    bg: 'from-yellow-900/40 to-black',
     accent: 'bg-yellow-500',
-    rankBg: 'bg-black/90',
+    rankBg: 'bg-black/95',
     textShadow: 'shadow-yellow-500/50',
     icon: '★'
   }
